@@ -1,0 +1,13 @@
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.3\arm\bin\armproc.dll" 
+
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.3\arm\bin\armsim2.dll" 
+
+"H:\1. 개발프로젝트\1. Icontrols\1.홈오토메이션\IDC-810ZB\FW\IDC_810ZB\EWARM\Debug\Exe\IDC_810ZB.out" 
+
+--plugin "C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.3\arm\bin\armbat.dll" 
+
+--device_macro "C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.3\arm\config\debugger\ST\STM32F05xxx_06xxx.dmac" 
+
+
+
+

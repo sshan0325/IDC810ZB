@@ -1,0 +1,9 @@
+---- g_WatchdogEvent Matches (8 in 3 files) ----
+Main.c (g:\workspace\06.mcu\idc_810zb):unsigned char g_WatchdogEvent = RESET;
+Main.c (g:\workspace\06.mcu\idc_810zb):      if ( g_WatchdogEvent )
+Main.c (g:\workspace\06.mcu\idc_810zb):            g_WatchdogEvent = RESET;
+Passing.c (g:\workspace\06.mcu\idc_810zb):extern unsigned char g_WatchdogEvent;
+Passing.c (g:\workspace\06.mcu\idc_810zb):        g_WatchdogEvent = SET;   // 통신시에 계속 이벤트 셋팅 
+Stm32f0xx_it.c (g:\workspace\06.mcu\idc_810zb):extern unsigned char g_WatchdogEvent ;
+Stm32f0xx_it.c (g:\workspace\06.mcu\idc_810zb):            g_WatchdogEvent = SET;  // 20 초마다 왓치독  이벤트 셋팅 
+Stm32f0xx_it.c (g:\workspace\06.mcu\idc_810zb):                  g_WatchdogEvent = RESET;

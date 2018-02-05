@@ -1,4 +1,4 @@
-/**
+  /**
   ******************************************************************************
   * @file    Project/STM32F0xx_StdPeriph_Templates/main.c 
   * @author  MCD Application Team
@@ -23,12 +23,25 @@
   * limitations under the License.
   *
   ******************************************************************************
-  */
+  **/
 
-/* Includes ------------------------------------------------------------------*/
-
+/* Includes ---------------------------------------------------------------*/
 #include "platform_config.h"
+#include "stdio.h"
+
 /* Private variables ---------------------------------------------------------*/
+unsigned char Call_Button ;
+unsigned char Key_Reg_End_Button_Flag = RESET;
+unsigned char LED_ON_Flag = RESET;
+unsigned char Button_Flag = RESET;
+unsigned char Call_Button_Flag = RESET;
+unsigned char g_WatchdogEvent = RESET;
+static __IO uint32_t TimingDelay;
+
+extern unsigned char Tx_LENGTH;
+extern unsigned char RF_DATA_RQST_Flag;
+extern unsigned char Usual_RF_Detec_Flag;
+extern unsigned char Reg_Mode_Start_Flag;
 extern unsigned char Timer14_100ms_Flag ;
 extern unsigned char Key_Reg_RQST_Flag ;
 extern unsigned char Tx_Buffer[128];
@@ -36,25 +49,7 @@ extern unsigned char U1_Rx_Buffer[128];
 extern unsigned char U1_Rx_Count;
 extern unsigned char RF_Key_CNT ;
 extern unsigned char Usaul_RF_Detec_Erase_Flag;
-unsigned char Call_Button ;
-unsigned char Key_Reg_End_Button_Flag = RESET;
-unsigned char LED_ON_Flag = RESET;
-unsigned char Button_Flag = RESET;
-unsigned char Call_Button_Flag = RESET;
-extern unsigned char Tx_LENGTH;
-extern unsigned char RF_DATA_RQST_Flag;
-extern unsigned char Usual_RF_Detec_Flag;
-extern unsigned char Reg_Mode_Start_Flag;
-
-
-
-unsigned char g_WatchdogEvent = RESET;
-static __IO uint32_t TimingDelay;
-
-void Response(void);
-
 extern unsigned char RF_Key_Detec_CNT_Flag ;
-/* Private functions ---------------------------------------------------------*/
 
 /**
   * @brief  Main program.
@@ -63,33 +58,31 @@ extern unsigned char RF_Key_Detec_CNT_Flag ;
   */
 int main(void)
 {  
-  
-        RCC_Configuration();
-        GPIO_Config();
-        NVIC_Config();
-        USART_Configuration();
-        TIM_Config();
-
-        
-
         if (SysTick_Config(SystemCoreClock / 1000))
         { 
               /* Capture error */ 
               while (1);
         }
-
+        
+        //printf ("[System        ] Power On");      
         while (1)
         {
-          
               RF_Key_Paket_handler();                // RF 모듈 패킷 핸들러
               Packet_handler();                          // 월 패드 패킷 핸들러
               RF_Packet_Erase_handler();           // 타임 아웃시 RF 모듈 패킷 삭제 핸들러
               Key_Polling();                               // 호출 버튼 감지 함수
               WatchDogTask();                          // 왓치독 이베트 셋팅 함수
-
-                
         }
 
+}
+
+void SysInit(void)
+{
+        RCC_Configuration();
+        GPIO_Config();
+        NVIC_Config();
+        USART_Configuration();
+        TIM_Config();  
 }
 
 
@@ -224,3 +217,5 @@ void TimingDelay_Decrement(void)
     TimingDelay--;
   }
 }
+
+

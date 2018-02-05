@@ -87,7 +87,7 @@
         </option>
         <option>
           <name>OGLastSavedByProductVersion</name>
-          <state>7.10.1.6733</state>
+          <state>7.20.2.7418</state>
         </option>
         <option>
           <name>GeneralEnableMisra</name>
@@ -163,7 +163,7 @@
       <name>ICCARM</name>
       <archiveVersion>2</archiveVersion>
       <data>
-        <version>30</version>
+        <version>31</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>1</debug>
         <option>
@@ -406,6 +406,10 @@
           <name>CCOptStrategySlave</name>
           <version>0</version>
           <state>0</state>
+        </option>
+        <option>
+          <name>CCGuardCalls</name>
+          <state>1</state>
         </option>
       </data>
     </settings>
@@ -1104,7 +1108,7 @@
       <name>ICCARM</name>
       <archiveVersion>2</archiveVersion>
       <data>
-        <version>30</version>
+        <version>31</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>0</debug>
         <option>
@@ -1343,6 +1347,10 @@
           <name>CCOptStrategySlave</name>
           <version>0</version>
           <state>0</state>
+        </option>
+        <option>
+          <name>CCGuardCalls</name>
+          <state>1</state>
         </option>
       </data>
     </settings>
@@ -1960,6 +1968,48 @@
   </group>
   <group>
     <name>USER</name>
+    <group>
+      <name>Inc</name>
+      <file>
+        <name>$PROJ_DIR$\..\passing.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\platform_config.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\RF_KEY.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\stm32f0xx_conf.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\stm32f0xx_it.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\subfunction.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\usart.h</name>
+      </file>
+    </group>
+    <group>
+      <name>ISR</name>
+      <file>
+        <name>$PROJ_DIR$\..\stm32f0xx_it.c</name>
+      </file>
+    </group>
+    <group>
+      <name>RF_Key</name>
+      <file>
+        <name>$PROJ_DIR$\..\RF_KEY.c</name>
+      </file>
+    </group>
+    <group>
+      <name>USART</name>
+      <file>
+        <name>$PROJ_DIR$\..\usart.c</name>
+      </file>
+    </group>
     <file>
       <name>$PROJ_DIR$\..\main.c</name>
     </file>
@@ -1967,28 +2017,10 @@
       <name>$PROJ_DIR$\..\passing.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\passing.h</name>
-    </file>
-    <file>
       <name>$PROJ_DIR$\..\platform_config.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\platform_config.h</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\RF_KEY.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\RF_KEY.h</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\stm32f0xx_conf.h</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\stm32f0xx_it.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\stm32f0xx_it.h</name>
+      <name>$PROJ_DIR$\..\subfunction.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\Watchdog.c</name>

@@ -29,18 +29,22 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f0xx_it.h"
-//#include "main.h"
 #include "stdio.h"
 #include "platform_config.h"
-/** @addtogroup Template_Project
-  * @{
-  */
 
-/* Private typedef -----------------------------------------------------------*/
+
 /* Private define ------------------------------------------------------------*/
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-/* Private macro -------------------------------------------------------------*/
+
 /* Private variables ---------------------------------------------------------*/
+
+/*************************** USART 1 ******************************/
+unsigned char U1_Rx_Count = 0;
+unsigned char U1_Rx_Compli_Flag = RESET;
+unsigned char U1_Rx_Buffer[256] = {0};
+unsigned char U1_Rx_71_Compli_Flag = RESET;
+unsigned int    U1_Rx_DataPosition = 0;
+
 /*************************** USART 2 ******************************/
 unsigned char Rx_Count = 0 ;
 unsigned char Rx_Compli_Flag = RESET;
@@ -58,12 +62,8 @@ extern unsigned char Key_Reg_Timeout_flag;
 unsigned int RF_Detec_Timeout_CNT = 0;
 unsigned char Usaul_RF_Detec_Erase_Flag = RESET;
 unsigned char RF_Detec_Timeout_Flag = RESET;
-/*************************** USART 1 ******************************/
 
 
-unsigned char U1_Rx_Buffer[128] = {0};
-unsigned char U1_Rx_Count = 0;
-unsigned char U1_Rx_Compli_Flag = RESET;
 
 unsigned char RF_Key_CNT = 0;
 unsigned char Reg_key_Value_Receive_Flag = RESET;
@@ -257,13 +257,16 @@ void USART2_IRQHandler(void)     // 월패트 통신 인터럽트
 
 
 
-unsigned char U1_Rx_71_Compli_Flag = RESET;
 
 void USART1_IRQHandler(void)     // RF 모듈 통신 인터럽트
 {
     if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
     {    
-            U1_Rx_Buffer[U1_Rx_Count++] = USART_ReceiveData(USART1);  
+            U1_Rx_Buffer[U1_Rx_Count] = USART_ReceiveData(USART1);  
+            U1_Rx_Count++;
+            U1_Rx_DataPosition++;
+
+#if 0            
             if((U1_Rx_Buffer[0] != 0x71)  && (U1_Rx_Buffer[0] != 0xCA) && (U1_Rx_Buffer[0] != 0xBA) && (U1_Rx_Buffer[0] != 0xDA))
             { // 쓰레기값 처리
                   U1_Rx_Count = 0 ;
@@ -281,6 +284,7 @@ void USART1_IRQHandler(void)     // RF 모듈 통신 인터럽트
                         U1_Rx_Compli_Flag = SET; 
                   }
             }
+#endif            
     }
 
     if(USART_GetITStatus(USART1, USART_IT_TXE) != RESET)

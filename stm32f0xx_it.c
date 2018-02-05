@@ -30,24 +30,33 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f0xx_it.h"
 #include "stdio.h"
+#include "usart.h"
 #include "platform_config.h"
 
 
 /* Private define ------------------------------------------------------------*/
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 
-/* Private variables ---------------------------------------------------------*/
+    PUTCHAR_PROTOTYPE
+{
+  USART_SendData(USART1, (uint8_t) ch);
+  while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
+  {}
+  return ch;
+}
 
+/* Private variables ---------------------------------------------------------*/
 /*************************** USART 1 ******************************/
 unsigned char U1_Rx_Count = 0;
 unsigned char U1_Rx_DataSavePosition = 0;
+unsigned char U1_Rx_DataPosition = 0;
+unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] = {0};
 
-unsigned char U1_Rx_Buffer[256] = {0};
-unsigned int    U1_Rx_DataPosition = 0;
 
 
+
+//Need to Check
 unsigned char U1_Rx_71_Compli_Flag = RESET;
-
 
 /*************************** USART 2 ******************************/
 unsigned char Rx_Count = 0 ;
@@ -269,7 +278,6 @@ void USART1_IRQHandler(void)     // RF 모듈 통신 인터럽트
             U1_Rx_Buffer[U1_Rx_DataSavePosition] = USART_ReceiveData(USART1);  
             U1_Rx_Count++;
             U1_Rx_DataSavePosition++;
-      
     }
 
     if(USART_GetITStatus(USART1, USART_IT_TXE) != RESET)
@@ -278,10 +286,4 @@ void USART1_IRQHandler(void)     // RF 모듈 통신 인터럽트
     }
 }
 
-PUTCHAR_PROTOTYPE
-{
-  USART_SendData(USART1, (uint8_t) ch);
-  while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-  {}
-  return ch;
-}
+

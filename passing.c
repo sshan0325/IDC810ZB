@@ -1,15 +1,20 @@
 /* Includes ------------------------------------------------------------------*/
-
 #include "passing.h"
+#include "usart.h"
 
 /* Private variables ---------------------------------------------------------*/
+//Seungshin Using
+/* UART  Ch1-------------------------------------------------------------*/
+extern unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] ;
+
+
 
 ///////////////// UART /////////////////
-extern unsigned char Rx_Buffer[128]; //87->5
+extern unsigned char Rx_Buffer[128]; 
 extern unsigned char Rx_Compli_Flag ;
 unsigned char Temp_buffer[17] ={0};
 
-unsigned char Tx_Buffer[128] = {0} ;  //87->5
+unsigned char Tx_Buffer[128] = {0} ;  
 unsigned char Data_Check = 0;
 
 extern unsigned char Rx_Count ;
@@ -17,7 +22,7 @@ extern unsigned char Rx_Count ;
 
 unsigned char TX_CMD = 0x00 ;
 
-extern unsigned char U1_Rx_Buffer[128] ;
+
 extern unsigned char U1_Rx_Flag ;
 
 unsigned char Cognition_Disable_Flag = RESET;
@@ -337,7 +342,6 @@ void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수
 
 void CMD(void)
 {
-
         switch(Rx_Buffer[3])
         {
           

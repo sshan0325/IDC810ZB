@@ -28,8 +28,19 @@
 /* Includes ---------------------------------------------------------------*/
 #include "platform_config.h"
 #include "stdio.h"
+#include "usart.h"
+    
 
 /* Private variables ---------------------------------------------------------*/
+//Seungshin Using
+/* UART  Ch1-------------------------------------------------------------*/
+extern unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE];
+extern unsigned char U1_Rx_Count;    
+
+
+
+
+//Need to Check
 unsigned char Call_Button ;
 unsigned char Key_Reg_End_Button_Flag = RESET;
 unsigned char LED_ON_Flag = RESET;
@@ -37,7 +48,6 @@ unsigned char Button_Flag = RESET;
 unsigned char Call_Button_Flag = RESET;
 unsigned char g_WatchdogEvent = RESET;
 static __IO uint32_t TimingDelay;
-
 extern unsigned char Tx_LENGTH;
 extern unsigned char RF_DATA_RQST_Flag;
 extern unsigned char Usual_RF_Detec_Flag;
@@ -45,8 +55,6 @@ extern unsigned char Reg_Mode_Start_Flag;
 extern unsigned char Timer14_100ms_Flag ;
 extern unsigned char Key_Reg_RQST_Flag ;
 extern unsigned char Tx_Buffer[128];
-extern unsigned char U1_Rx_Buffer[128];
-extern unsigned char U1_Rx_Count;
 extern unsigned char RF_Key_CNT ;
 extern unsigned char Usaul_RF_Detec_Erase_Flag;
 extern unsigned char RF_Key_Detec_CNT_Flag ;
@@ -66,11 +74,10 @@ int main(void)
               while (1);
         }
         
-        
-        /////////////////////////////////////////////////////////////////////////////////
+#ifdef Consol_LOG        
         printf ("\r\n[System                     ] Power On\r\n");     
         printf ("\r\n[RF Key Comm           ] RF_KEY_PACKET Input\r\n");     
-        /////////////////////////////////////////////////////////////////////////////////
+#endif
         
         while (1)
         {

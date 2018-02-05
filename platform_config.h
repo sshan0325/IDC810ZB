@@ -11,6 +11,8 @@
 #define SET                     1
 #define RESET                   0
 
+#define Consol_LOG              
+
 #define STX                     0x02
 #define RF_Camera_ID            0xA2
 
@@ -42,7 +44,6 @@
 void TIM_Config(void);
 void GPIO_Config(void);
 void NVIC_Config(void);
-void USART_Configuration(void);
 void RCC_Configuration(void);
 void EXTI4_15_Config(void);
 

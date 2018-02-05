@@ -58,20 +58,13 @@ extern unsigned char RF_Key_Detec_CNT_Flag ;
   */
 int main(void)
 {  
-        SysInit();
-          
         if (SysTick_Config(SystemCoreClock / 1000))
         { 
               /* Capture error */ 
               while (1);
         }
         
-        
-        /////////////////////////////////////////////////////////////////////////////////
-        printf ("\r\n[System                     ] Power On\r\n");     
-        printf ("\r\n[RF Key Comm           ] RF_KEY_PACKET Input\r\n");     
-        /////////////////////////////////////////////////////////////////////////////////
-        
+        //printf ("[System        ] Power On");      
         while (1)
         {
               RF_Key_Paket_handler();                // RF 모듈 패킷 핸들러

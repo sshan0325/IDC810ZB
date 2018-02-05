@@ -11,6 +11,7 @@ unsigned char RF_Packet_5 = 0x00;
 unsigned char RF_Data_Check = RESET;
 extern unsigned char Tx_Buffer[128];  
 extern unsigned char Rx_Buffer[128];  
+extern unsigned char U1_Rx_Compli_Flag;
 
 extern unsigned char U1_Rx_Buffer[128] ;
 extern unsigned char U1_Rx_Count;
@@ -42,15 +43,11 @@ void RF_Key_Paket_handler(void)
 {
     while(U1_Rx_Count >= RF_KEY_PACKET_SIZE)
     {
-        printf ("\r\n[RF Key Comm           ] RF_KEY_PACKET Input\r\n");     
-        printf ("[RF Key Comm           ] RF_KEY_PACKET Total Data Length : %d\r\n", U1_Rx_Count);     
-        printf ("[RF Key Comm           ] RF_KEY_PACKET Data Process Position : %d\r\n", U1_Rx_DataPosition);     
         if(Key_Reg_RQST_Flag == SET)  // 키 등록 모드
         {
             /***************** 등록 성공 *********************/
             if(U1_Rx_Buffer[U1_Rx_DataPosition] == 0xCA)             // 스마트키 등록성공 (부저음 2회 발생)
             {
-                    printf ("\r\n[RF Key Comm           ] RF_KEY Regist Success \r\n"); 
                     Reg_key_Value_Receive_Flag = SET;  
                     
                     U1_Rx_Count -= RF_KEY_PACKET_SIZE;
@@ -58,10 +55,10 @@ void RF_Key_Paket_handler(void)
                     
                     BuzzerRun(100, 2,100,20);
             }
+
             /***************** 등록 실패 *********************/        
             else if(U1_Rx_Buffer[0] == 0xBA)             //스마트 키 등록 실패 
             {
-                    printf ("\r\n[RF Key Comm           ] RF_KEY Regist fail\r\n"); 
                     Reg_key_Value_Receive_Flag = RESET;
 
                     if(U1_Rx_Buffer[6] == 0x01) // 이미 등록된 키일 경우(부저음 4회 발생)
@@ -72,52 +69,16 @@ void RF_Key_Paket_handler(void)
                           BuzzerRun(100, 4, 70, 15);
                     }
                     
-                    else if(U1_Rx_Buffer[6] == 0x02)  // 통신 실패 났을 경우
+                    if(U1_Rx_Buffer[6] == 0x02)  // 통신 실패 났을 경우
                     {
                           Tx_Buffer[5] |= 0x08;     // 통신 실패라는 플래그 셋팅 및 데이터 저장
                           RF_Communi_Fail = SET;
-                    }
-                    else 
-                    {
-                          printf ("\r\n[RF Key Comm           ] RF_KEY Regist mode Packet Error\r\n"); 
                     }
 
                     U1_Rx_Count -= RF_KEY_PACKET_SIZE;
                     U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE)%256;
             } // END of if (등록 실패)
-            else
-            {
-                U1_Rx_Count --;
-                U1_Rx_DataPosition ++;              
-                if (U1_Rx_DataPosition>255)
-                  U1_Rx_DataPosition=0; 
                 
-                printf ("\r\n[RF Key Comm           ] RF_KEY Regist mode Packet Error : %x, %x, %x\r\n",U1_Rx_Buffer[U1_Rx_DataPosition],U1_Rx_Buffer[U1_Rx_DataPosition+1],U1_Rx_Buffer[U1_Rx_DataPosition+2]);               
-            }
-
-        } // 키 등록 모드
-        
-        else  // 일반 모드
-        {
-            if(U1_Rx_Buffer[U1_Rx_DataPosition] == 0x71)                  // 평상시 키 인식시 
-            {
-                  printf ("\r\n[RF Key Comm           ] RF_KEY Recognition Done\r\n"); 
-                  RF_Key_Detec_CNT_Flag = SET;
-
-                  if(RF_Key_CNT > 5)                 // 인식 키 개수가 5개 이상일 경우
-                  {
-                        U1_Rx_Count = 0;                // 배열 카운트 초기화 안하면 시스템 다운
-                        RF_Key_CNT = 5;  
-                        printf ("\r\n[RF Key Comm           ] Input RF_KEY No. is Over 5\r\n"); 
-                  }
-                  
-                  Usual_RF_Detec_Flag = SET;
-                  RF_Data_Save(RF_Key_CNT,U1_Rx_Buffer);  // 키 데이터 저장 함수 
-                  RF_Detec_Timeout_Flag = SET;                  // 평상시 키인식 타임 아웃 플래그 셋팅
-                  
-                  U1_Rx_Count -= RF_KEY_PACKET_SIZE;
-                  U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE)%256;
-            }   
              /***************** 평상시 키 인식시 개수 처리 루틴 *********************/
             else if(U1_Rx_Buffer[U1_Rx_DataPosition] == 0xDA)              // 평상시 RF 키 인식 갯수 패킷
             {
@@ -131,16 +92,28 @@ void RF_Key_Paket_handler(void)
                   
                   U1_Rx_Count -= RF_KEY_PACKET_SIZE;
                   U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE)%256;
-            }            
-            else
-            {
-                U1_Rx_Count --;
-                U1_Rx_DataPosition ++;              
-                if (U1_Rx_DataPosition>255)
-                  U1_Rx_DataPosition=0; 
-                
-                printf ("\r\n[RF Key Comm           ] RF_KEY Normal mode Packet Error : %x, %x, %x\r\n",U1_Rx_Buffer[U1_Rx_DataPosition],U1_Rx_Buffer[U1_Rx_DataPosition+1],U1_Rx_Buffer[U1_Rx_DataPosition+2]); 
             }
+        } // 키 등록 모드
+        
+        else  // 일반 모드
+        {
+            if(U1_Rx_Buffer[U1_Rx_DataPosition] == 0x71)                  // 평상시 키 인식시 
+            {
+                  RF_Key_Detec_CNT_Flag = SET;
+
+                  if(RF_Key_CNT > 5)                 // 인식 키 개수가 5개 이상일 경우
+                  {
+                        U1_Rx_Count = 0;                // 배열 카운트 초기화 안하면 시스템 다운
+                        RF_Key_CNT = 5;  
+                  }
+                  
+                  Usual_RF_Detec_Flag = SET;
+                  RF_Data_Save(RF_Key_CNT,U1_Rx_Buffer);  // 키 데이터 저장 함수 
+                  RF_Detec_Timeout_Flag = SET;                  // 평상시 키인식 타임 아웃 플래그 셋팅
+                  
+                  U1_Rx_Count -= RF_KEY_PACKET_SIZE;
+                  U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE)%256;
+            }   
         }  // 일반 모드
     }
         

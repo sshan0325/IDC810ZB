@@ -17,7 +17,6 @@ extern unsigned char Rx_Count ;
 
 unsigned char TX_CMD = 0x00 ;
 
-extern unsigned char U1_Rx_Compli_Flag ;
 extern unsigned char U1_Rx_Buffer[128] ;
 extern unsigned char U1_Rx_Flag ;
 

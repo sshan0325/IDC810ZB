@@ -40,10 +40,14 @@
 
 /*************************** USART 1 ******************************/
 unsigned char U1_Rx_Count = 0;
-unsigned char U1_Rx_Compli_Flag = RESET;
+unsigned char U1_Rx_DataSavePosition = 0;
+
 unsigned char U1_Rx_Buffer[256] = {0};
-unsigned char U1_Rx_71_Compli_Flag = RESET;
 unsigned int    U1_Rx_DataPosition = 0;
+
+
+unsigned char U1_Rx_71_Compli_Flag = RESET;
+
 
 /*************************** USART 2 ******************************/
 unsigned char Rx_Count = 0 ;
@@ -262,29 +266,10 @@ void USART1_IRQHandler(void)     // RF 모듈 통신 인터럽트
 {
     if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
     {    
-            U1_Rx_Buffer[U1_Rx_Count] = USART_ReceiveData(USART1);  
+            U1_Rx_Buffer[U1_Rx_DataSavePosition] = USART_ReceiveData(USART1);  
             U1_Rx_Count++;
-            U1_Rx_DataPosition++;
-
-#if 0            
-            if((U1_Rx_Buffer[0] != 0x71)  && (U1_Rx_Buffer[0] != 0xCA) && (U1_Rx_Buffer[0] != 0xBA) && (U1_Rx_Buffer[0] != 0xDA))
-            { // 쓰레기값 처리
-                  U1_Rx_Count = 0 ;
-            }
-             
-            if((U1_Rx_Buffer[0] == 0x71) && ((RF_Key_CNT * 17) == U1_Rx_Count))
-            {  // 평상 시 키 인식시
-                  U1_Rx_71_Compli_Flag = SET;
-            }
-               
-            if((U1_Rx_Buffer[0] == 0xCA) || (U1_Rx_Buffer[0] == 0xBA) || (U1_Rx_Buffer[0] == 0xDA))
-            {    // 키등록시  , 평상시 키인식시 개수 정보 패킷     
-                  if((U1_Rx_Count % 17 ) == 0) //////////////////////////////////////
-                  {   
-                        U1_Rx_Compli_Flag = SET; 
-                  }
-            }
-#endif            
+            U1_Rx_DataSavePosition++;
+      
     }
 
     if(USART_GetITStatus(USART1, USART_IT_TXE) != RESET)

@@ -78,7 +78,7 @@ unsigned char RF_Detec_Timeout_Flag = RESET;
 
 
 
-unsigned char RF_Key_CNT = 0;
+
 unsigned char Reg_key_Value_Receive_Flag = RESET;
 unsigned char Usual_RF_Detec_Flag = RESET;
 

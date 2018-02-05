@@ -342,6 +342,7 @@ void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수
 
 void CMD(void)
 {
+
         switch(Rx_Buffer[3])
         {
           

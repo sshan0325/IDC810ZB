@@ -67,17 +67,19 @@ extern unsigned char RF_Key_Detec_CNT_Flag ;
 int main(void)
 {  
         SysInit();
-          
+        
+        #ifdef Consol_LOG        
+        printf ("\r\n[System                     ] Power On\r\n");     
+        printf ("\r\n[System                     ] System Init Done.\r\n");     
+        #endif
+        
         if (SysTick_Config(SystemCoreClock / 1000))
         { 
               /* Capture error */ 
               while (1);
         }
         
-#ifdef Consol_LOG        
-        printf ("\r\n[System                     ] Power On\r\n");     
-        printf ("\r\n[RF Key Comm           ] RF_KEY_PACKET Input\r\n");     
-#endif
+
         
         while (1)
         {

@@ -1,6 +1,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "passing.h"
 #include "usart.h"
+#include "RF_KEY.h"
 
 /* Private variables ---------------------------------------------------------*/
 //Seungshin Using
@@ -10,6 +11,11 @@ extern unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] ;
 
 
 ///////////////// UART /////////////////
+extern unsigned char    U1_Rx_DataPosition;
+
+
+
+//Need to Check
 extern unsigned char Rx_Buffer[128]; 
 extern unsigned char Rx_Compli_Flag ;
 unsigned char Temp_buffer[17] ={0};
@@ -227,6 +233,7 @@ unsigned char Make_Checksum(void)                       //
 ///////////////////////////////////////////////////////////////////////////////////////
 void Response(void)                                                          
 {
+  int tmp=0;
       GPIO_WriteBit(GPIOB,  GPIO_Pin_0 , (BitAction) Bit_SET);  // 485 Trans pin Enable 
           
                 Tx_Buffer[0] = STX ;
@@ -266,24 +273,39 @@ void Response(void)
     /*************  스마트키 등록시 응답패킷 저장 루틴  **************/          
            if((Reg_key_Value_Receive_Flag == SET))
           {
-            
                 Tx_LENGTH = ( 16 * RF_Key_CNT ) + 7 ;
-                
+              
 
-                  for(unsigned char i = 6 ; i < ( Tx_LENGTH - 1 ) ; i ++ )    // 22
-                  {                                                                              // 패킷 길이 23 체크섭 전까지 버퍼  [23-1] = [22] ( 체크섬 자리) (<) 이므로 체크섬 자리바로 앞!
-                      Tx_Buffer[i] = U1_Rx_Buffer[i-5] ;                            //16까지 저장,  UART 1에서 들어오는 데이터 필드 [0] 은 버리고 전송
-                  }
-                  
-                  Tx_Buffer[2] = Tx_LENGTH;                                         // Tx_LENGTH 변수에만 넣고 버퍼에 넣지 않으면 값이 않들어 감
-                  
-                  Tx_Buffer[Tx_LENGTH-1] = Make_Checksum();
+                for(unsigned char i = 6 ; i < ( Tx_LENGTH - 1 ) ; i ++ )    // 22
+                {                                                                              // 패킷 길이 23 체크섭 전까지 버퍼  [23-1] = [22] ( 체크섬 자리) (<) 이므로 체크섬 자리바로 앞!
+                    Tx_Buffer[i] = U1_Rx_Buffer[U1_Rx_DataPosition-RF_KEY_PACKET_SIZE+i-5] ;                            //16까지 저장,  UART 1에서 들어오는 데이터 필드 [0] 은 버리고 전송
+                }
+
+                Tx_Buffer[2] = Tx_LENGTH;                                         // Tx_LENGTH 변수에만 넣고 버퍼에 넣지 않으면 값이 않들어 감
+                
+                Tx_Buffer[Tx_LENGTH-1] = Make_Checksum();
 
                         
              
                 RF_Key_CNT = 0;
                        
                 Reg_key_Value_Receive_Flag = RESET;
+                
+#if 1                  
+                printf ("\r\n");
+                printf ("RF Key CNT : %d \r\n ",RF_Key_CNT) ;
+                printf ("Tx Length : %d \r\n ",Tx_LENGTH) ;
+                
+                for (tmp=U1_Rx_DataPosition-RF_KEY_PACKET_SIZE ; tmp<U1_Rx_DataPosition-RF_KEY_PACKET_SIZE+17 ; tmp++)
+                {
+                  printf ("%x, ",U1_Rx_Buffer[tmp]) ;
+                }
+                printf ("\r\n");                  
+                for (tmp=0 ; tmp<Tx_LENGTH ; tmp++)
+                {
+                  printf ("%x, ",Tx_Buffer[tmp]) ;
+                }
+#endif                       
           }
   
           

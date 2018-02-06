@@ -1,32 +1,3 @@
-/**
-  ******************************************************************************
-  * @file    Project/STM32F0xx_StdPeriph_Templates/stm32f0xx_it.c 
-  * @author  MCD Application Team
-  * @version V1.0.0
-  * @date    18-May-2012
-  * @brief   Main Interrupt Service Routines.
-  *          This file provides template for all exceptions handler and 
-  *          peripherals interrupt service routine.
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; COPYRIGHT 2012 STMicroelectronics</center></h2>
-  *
-  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
-  * You may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at:
-  *
-  *        http://www.st.com/software_license_agreement_liberty_v2
-  *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
-  *
-  ******************************************************************************
-  */
-
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f0xx_it.h"
 #include "stdio.h"
@@ -53,7 +24,8 @@ unsigned char U1_Rx_DataPosition = 0;
 unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] = {0};
 
 
-
+/*************************** TIMER ********************************/
+unsigned int    SystemTime_Tick=0;
 
 //Need to Check
 unsigned char U1_Rx_71_Compli_Flag = RESET;
@@ -158,6 +130,10 @@ unsigned int Key_Reg_Timeout_CNT = 0;
 
 void TIM14_IRQHandler(void) //10ms
 {
+    SystemTime_Tick++;
+    
+    
+    
     if (TIM_GetITStatus(TIM14, TIM_IT_Update) != RESET)
     {
         TIM_ClearITPendingBit(TIM14, TIM_IT_Update);
@@ -271,7 +247,7 @@ void USART2_IRQHandler(void)     // 월패트 통신 인터럽트
 
 
 
-void USART1_IRQHandler(void)     // RF 모듈 통신 인터럽트
+void USART1_IRQHandler(void)     
 {
     if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
     {    

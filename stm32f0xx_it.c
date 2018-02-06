@@ -3,7 +3,7 @@
 #include "stdio.h"
 #include "usart.h"
 #include "platform_config.h"
-
+#include "subfunction.h"
 
 /* Private define ------------------------------------------------------------*/
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
@@ -39,9 +39,8 @@ unsigned char Rx_Buffer[128] = {0};
 
 /*************************** TIMMER 14 ******************************/
 unsigned char Timer14_CNT = 0;
-unsigned char Timer14_100ms_Flag = RESET;
-extern unsigned char LED_ON_Flag ;
-unsigned int LED_ON_CNT = 0;
+
+
 extern unsigned char Key_Reg_Timeout_flag;
 //unsigned int Key_Reg_Timeout_CNT = 0;
 unsigned int RF_Detec_Timeout_CNT = 0;
@@ -132,39 +131,19 @@ void TIM14_IRQHandler(void) //10ms
 {
     SystemTime_Tick++;
     
-    
-    
+ 
     if (TIM_GetITStatus(TIM14, TIM_IT_Update) != RESET)
     {
         TIM_ClearITPendingBit(TIM14, TIM_IT_Update);
           
         Timer14_CNT ++;
         
-        if(LED_ON_Flag)                         LED_ON_CNT++;
         if(RF_Detec_Timeout_Flag)           RF_Detec_Timeout_CNT++;
         if(Watch_Dog_Flag)                      Watch_Dog_Flag_CNT ++;
         if(Time_Out_Flag)                       Time_Out_Flag_CNT++;
         if(Key_Reg_Timeout_flag)             Key_Reg_Timeout_CNT ++;
         
-        
-        
-        
-        if(Timer14_CNT == 10 )   //100ms KEY POOLING
-        {
-            Timer14_100ms_Flag = SET;
-            Timer14_CNT = 0;       
-        }
-        
-        
-   
-        if(LED_ON_CNT == 200)    // 호출  버튼 누르고 20초 후 LED OFF 
-        {
-              LED_ON_CNT = 0;
-              LED_ON_Flag = RESET;
-              GPIO_WriteBit(GPIOB,GPIO_Pin_14,(BitAction) Bit_RESET);
-         
-        }
-        
+
         if(RF_Detec_Timeout_CNT == 3000)  // 30 초, 키 인식후 데이터 삭제
         {
               RF_Detec_Timeout_CNT = 0;
@@ -241,7 +220,7 @@ void USART2_IRQHandler(void)     // 월패트 통신 인터럽트
 
         } // end of TX if
     
-}  // end of UART IQR
+} 
 
 
 

@@ -3,10 +3,6 @@
 #include "platform_config.h"
 
 /* Private variables ---------------------------------------------------------*/
-TIM_TimeBaseInitTypeDef         TIM_TimeBaseStructure;
-TIM_OCInitTypeDef                   TIM_OCInitStructure;
-GPIO_InitTypeDef                      GPIO_InitStructure;
-NVIC_InitTypeDef                      NVIC_InitStructure;
 
 void RCC_Configuration(void)
 {
@@ -29,6 +25,8 @@ void RCC_Configuration(void)
 
 void GPIO_Config(void)
 {
+  GPIO_InitTypeDef                      GPIO_InitStructure;
+  
   // LED
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14 | GPIO_Pin_15;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
@@ -91,6 +89,9 @@ void GPIO_Config(void)
 //////////////////////////////////// TIMMER//////////////////////////////////////////////////
 void TIM_Config(void)
 {
+  TIM_TimeBaseInitTypeDef         TIM_TimeBaseStructure;
+  TIM_OCInitTypeDef                   TIM_OCInitStructure;
+  
    // Timer 3 Base configuration  _ BUZZER
   TIM_TimeBaseStructure.TIM_Prescaler = 480; // 48000000 / 4800 =10000 Hz=  0.1ms
   TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
@@ -157,6 +158,8 @@ void TIM_Config(void)
 
 void NVIC_Config(void)
 {
+  NVIC_InitTypeDef                      NVIC_InitStructure;
+  
   //Enable the TIM14 gloabal Interrupt 
   NVIC_InitStructure.NVIC_IRQChannel = TIM14_IRQn;
   NVIC_InitStructure.NVIC_IRQChannelPriority = 2 ;

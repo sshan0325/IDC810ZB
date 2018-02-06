@@ -8,10 +8,10 @@
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
+#define Consol_LOG       
+
 #define SET                     1
 #define RESET                   0
-
-#define Consol_LOG              
 
 #define STX                     0x02
 #define RF_Camera_ID            0xA2
@@ -48,7 +48,6 @@ void RCC_Configuration(void);
 void EXTI4_15_Config(void);
 
 void Packet_handler(void); 
-void Key_Polling(void);
 void RF_Packet_Erase_handler(void);
 void RF_Key_Paket_handler(void);
 

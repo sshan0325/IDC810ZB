@@ -2,6 +2,7 @@
 #include "passing.h"
 #include "usart.h"
 #include "RF_KEY.h"
+#include "subfunction.h"
 
 /* Private variables ---------------------------------------------------------*/
 //Seungshin Using
@@ -13,8 +14,8 @@ extern unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] ;
 ///////////////// UART /////////////////
 extern unsigned char    U1_Rx_DataPosition;
 
-
-
+//Have to Check
+unsigned char Call_Button_Flag ;
 //Need to Check
 extern unsigned char Rx_Buffer[128]; 
 extern unsigned char Rx_Compli_Flag ;
@@ -60,7 +61,7 @@ extern unsigned char RF_Communi_Fail ;
 unsigned char Reg_Fail_Bit_Clear_Flag = RESET;
 
 unsigned char Key_Reg_U1_Send_Flag = RESET;
-extern unsigned char Call_Button_Flag ;
+
 unsigned char Reg_Compli_Flag = RESET;
 unsigned char Key_Save_Flag = RESET;
 
@@ -79,6 +80,11 @@ unsigned char Watch_Dog_init_Flag = SET;
 extern unsigned int Watch_Dog_Flag_CNT;
 extern unsigned char CNT ;
 extern unsigned char Time_Out_Flag_CNT;
+
+
+
+
+
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private functions ---------------------------------------------------------*/
@@ -726,7 +732,6 @@ void CMD(void)
                         Key_Reg_RQST_Flag = RESET;
                         Reg_Mode_Start_Flag = RESET;
                       
-                        
                         TIM_SetCompare1(TIM3,40);
                         Delay(80);
                         TIM_SetCompare1(TIM3,0); 

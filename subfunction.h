@@ -7,7 +7,7 @@ void Check_Key_State(void);
 /* KEY STATE -----------------------------------------------------------------*/
 #define KEY_PUSHED                      0
 #define KEY_RELEASED                    1
-#define KEY_POLLING_CHECKCOUNT          2
+#define KEY_POLLING_CHECKCOUNT          10
 
 /* KEY ACTIVE ----------------------------------------------------------------*/
 #define KEY_ACTIVE                      1

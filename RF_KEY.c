@@ -11,32 +11,37 @@ unsigned char RF_Key_CNT = 0;
 extern unsigned char    U1_Rx_Buffer[U1_RX_BUFFER_SIZE] ;
 extern unsigned char    U1_Rx_Count;
 extern unsigned char    U1_Rx_DataPosition;
+/* UART  Ch2-------------------------------------------------------------*/
+extern unsigned char U2_Rx_Buffer[128];  
+extern unsigned char U2_Tx_Buffer[128];  
+
 
 //Need to Check
 unsigned char RF_Packet_1_4 = 0x00;
 unsigned char RF_Packet_5 = 0x00;
 unsigned char RF_Data_Check = RESET;
-extern unsigned char Tx_Buffer[128];  
-extern unsigned char Rx_Buffer[128];  
 extern unsigned char Reg_key_Value_Receive_Flag ;
 extern unsigned char Usual_RF_Detec_Flag ;
 extern unsigned char RF_Detec_Timeout_Flag ;
 unsigned char value_1 = 6;
 unsigned char Reg_Fail_Flag = RESET;
 unsigned char RF_Communi_Fail = RESET;
-unsigned char RF_Key_Detec_CNT_Flag = RESET;
-extern unsigned char Time_Out_Flag ;
-extern unsigned char Time_Out_Flag_CNT;
 unsigned char U1_71_Buffer[128] = {0};
 extern unsigned char Key_Reg_RQST_Flag;
+//Flag
+unsigned char RF_Key_Detec_CNT_Flag = RESET;
+//Timer
+extern unsigned char Time_Out_Flag ;
+extern unsigned char Time_Out_Flag_CNT;
+
 
 
 /* Private functions ---------------------------------------------------------*/
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
 /******************** RF 모듈 패킷 수신 처리 함수   *******************/
-/////////////////////////////////////////////////////////////////////////////////////////////////
-void RF_Key_Paket_handler(void)
+///////////////////////////////////////////////////////////////////////////////////
+void RF_Key_Packet_handler(void)
 {
     if(U1_Rx_Count >= RF_KEY_PACKET_SIZE)
     {
@@ -45,7 +50,7 @@ void RF_Key_Paket_handler(void)
         case RF_KEY_CHECK:
                 RF_Key_CNT = U1_Rx_Buffer[U1_Rx_DataPosition+2];
             
-                Tx_Buffer[6] =  RF_Key_CNT; //U1_DA_Buffer[2];  // 키 갯수 전달 
+                U2_Tx_Buffer[6] =  RF_Key_CNT; //U1_DA_Buffer[2];  // 키 갯수 전달 
                 RF_Key_Detec_CNT_Flag = SET;
                 
                 Time_Out_Flag = RESET;     // RF 모듈 타임 아웃 초기화
@@ -94,14 +99,14 @@ void RF_Key_Paket_handler(void)
                     
                     if(U1_Rx_Buffer[U1_Rx_DataPosition+6] == 0x01) // 이미 등록된 키일 경우(부저음 4회 발생)
                     {
-                          Tx_Buffer[5] |= 0x04;   // 등록된 키라는 플래그 셋팅 및 데이터 저장
+                          U2_Tx_Buffer[5] |= 0x04;   // 등록된 키라는 플래그 셋팅 및 데이터 저장
                           Reg_Fail_Flag = SET;
                             
                           BuzzerRun(100, 4, 70, 15);
                     }
                     else if(U1_Rx_Buffer[U1_Rx_DataPosition+6] == 0x02)  // 통신 실패 났을 경우
                     {
-                          Tx_Buffer[5] |= 0x08;     // 통신 실패라는 플래그 셋팅 및 데이터 저장
+                          U2_Tx_Buffer[5] |= 0x08;     // 통신 실패라는 플래그 셋팅 및 데이터 저장
                           RF_Communi_Fail = SET;
                     }                  
 
@@ -157,9 +162,9 @@ void RF_Key_Paket_handler(void)
 } 
   
     
-/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
 /******************** 인식된 스마트키 데이터 확인 함수   *******************/
-/////////////////////////////////////////////////////////////////////////////////////////////////    
+/////////////////////////////////////////////////////////////////////////////////////////
     
 void RF_Data_Confirm(unsigned char CNT)  // 인식된 키 데이터 확인 함수 
 {
@@ -174,7 +179,7 @@ void RF_Data_Confirm(unsigned char CNT)  // 인식된 키 데이터 확인 함수
                   
                 for(unsigned char j = value_1 ; j <= (value_1 + 15) ;j++)
                 {
-                      if(Rx_Buffer[j] == U1_71_Buffer[j-6])          { RF_Data_Check ++;  }
+                      if(U2_Rx_Buffer[j] == U1_71_Buffer[j-6])          { RF_Data_Check ++;  }
                 }
                     
                  
@@ -198,8 +203,8 @@ void RF_Data_Confirm(unsigned char CNT)  // 인식된 키 데이터 확인 함수
            
         } // end of for 
     
-        Tx_Buffer[6] = RF_Packet_1_4;           // 검사 결과 전송데이터에 저장
-        Tx_Buffer[7] = RF_Packet_5;
+        U2_Tx_Buffer[6] = RF_Packet_1_4;           // 검사 결과 전송데이터에 저장
+        U2_Tx_Buffer[7] = RF_Packet_5;
         RF_Data_Check = 0;
   
   
@@ -208,9 +213,9 @@ void RF_Data_Confirm(unsigned char CNT)  // 인식된 키 데이터 확인 함수
  
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
 /******************** 인식된 스마트키 데이터 저장 함수  *******************/
-/////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
 void RF_Data_Save(unsigned char CNT, unsigned char *U1_Rx)      // 스마트키 데이터 저장 함수
 {
         
@@ -230,15 +235,15 @@ void RF_Data_Save(unsigned char CNT, unsigned char *U1_Rx)      // 스마트키 데이
 }
 
 
- ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ /////////////////////////////////////////////////////////////////////////////////////////////////////////
 /******************** 전송 데이터 초기화 함수 ( 타임아웃 발생시 사용 )  *******************/
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Clear_Tx_Buffer(void)  // 전송 데이터 초기화 함수
 {
         unsigned char  i= 0;
 
         for( i = 0 ; i < 92 ; i++)  
         {
-                Tx_Buffer[i] = 0x00;
+                U2_Tx_Buffer[i] = 0x00;
         }
 } 

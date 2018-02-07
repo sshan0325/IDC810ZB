@@ -3,6 +3,13 @@
 
 #include "platform_config.h"
 
+/* Private define ------------------------------------------------------------*/
+/////////       DEVICE STATE    /////////
+
+
+
+
+
 
 /* Private function prototypes -----------------------------------------------*/
 void Packet_handler(void);

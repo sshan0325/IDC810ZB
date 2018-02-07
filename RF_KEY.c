@@ -7,8 +7,6 @@
 /* Private variables ---------------------------------------------------------*/
 unsigned char RF_Key_CNT = 0;
 
-
-//Seungshin Using
 /* UART  Ch1-------------------------------------------------------------*/
 extern unsigned char    U1_Rx_Buffer[U1_RX_BUFFER_SIZE] ;
 extern unsigned char    U1_Rx_Count;
@@ -30,7 +28,6 @@ unsigned char RF_Key_Detec_CNT_Flag = RESET;
 extern unsigned char Time_Out_Flag ;
 extern unsigned char Time_Out_Flag_CNT;
 unsigned char U1_71_Buffer[128] = {0};
-extern unsigned char U1_Rx_71_Compli_Flag ;
 extern unsigned char Key_Reg_RQST_Flag;
 
 
@@ -41,22 +38,8 @@ extern unsigned char Key_Reg_RQST_Flag;
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void RF_Key_Paket_handler(void)
 {
-//    int tmp=0;
-
     if(U1_Rx_Count >= RF_KEY_PACKET_SIZE)
     {
-#if 0
-        #ifdef Consol_LOG 
-        printf ("\r\n");
-        printf ("Total Input Data Length : %d \r\n ",U1_Rx_Count) ;      
-        for (tmp=U1_Rx_DataPosition ; tmp<U1_Rx_DataPosition+17 ; tmp++)
-        {
-          printf ("%x, ",U1_Rx_Buffer[tmp]) ;
-        }
-        printf ("\r\n");
-        #endif
-#endif        
-        
         switch (U1_Rx_Buffer[U1_Rx_DataPosition])
         {
         case RF_KEY_CHECK:
@@ -93,6 +76,11 @@ void RF_Key_Paket_handler(void)
                     U1_Rx_Count -= RF_KEY_PACKET_SIZE;
                     U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE);
                 }
+                else 
+                {
+                    U1_Rx_Count -= RF_KEY_PACKET_SIZE;
+                    U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE);                  
+                }
                 break;                         
               
         case RF_KEY_REG_FAIL:
@@ -120,6 +108,11 @@ void RF_Key_Paket_handler(void)
                     U1_Rx_Count -= RF_KEY_PACKET_SIZE;
                     U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE);                    
                 }
+                else 
+                {
+                    U1_Rx_Count -= RF_KEY_PACKET_SIZE;
+                    U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE);                  
+                }                
                 break;
               
         case RF_KEY_RECOGNITION:   

@@ -23,17 +23,14 @@ unsigned char U1_Rx_DataSavePosition = 0;
 unsigned char U1_Rx_DataPosition = 0;
 unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] = {0};
 
-
-/*************************** TIMER ********************************/
-unsigned int    SystemTime_Tick=0;
-
-//Need to Check
-unsigned char U1_Rx_71_Compli_Flag = RESET;
-
 /*************************** USART 2 ******************************/
 unsigned char Rx_Count = 0 ;
 unsigned char Rx_Compli_Flag = RESET;
 unsigned char Rx_Buffer[128] = {0};
+
+
+/*************************** TIMER ********************************/
+unsigned int    SystemTime_Tick=0;
 
 
 
@@ -41,8 +38,9 @@ unsigned char Rx_Buffer[128] = {0};
 unsigned char Timer14_CNT = 0;
 
 
+//Need to Check
 extern unsigned char Key_Reg_Timeout_flag;
-//unsigned int Key_Reg_Timeout_CNT = 0;
+unsigned int Key_Reg_Timeout_CNT = 0;
 unsigned int RF_Detec_Timeout_CNT = 0;
 unsigned char Usaul_RF_Detec_Erase_Flag = RESET;
 unsigned char RF_Detec_Timeout_Flag = RESET;
@@ -124,8 +122,6 @@ unsigned int Watch_Dog_Flag_CNT = 0;
 extern unsigned char g_WatchdogEvent ;
 unsigned char CNT = 0;
 unsigned char Watch_Dog_Flag = SET ;
-
-unsigned int Key_Reg_Timeout_CNT = 0;
 
 void TIM14_IRQHandler(void) //10ms
 {

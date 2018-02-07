@@ -65,14 +65,8 @@ int main(void)
         printf ("\r\n[System                     ] System Init Done.\r\n");     
         #endif
         
-        if (SysTick_Config(SystemCoreClock / 1000))
-        { 
-              /* Capture error */ 
-              while (1);
-        }
-        
+        if (SysTick_Config(SystemCoreClock / 1000))                   while (1);
 
-        
         while (1)
         {
               RF_Key_Paket_handler();                // RF 모듈 패킷 핸들러

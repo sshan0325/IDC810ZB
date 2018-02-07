@@ -11,8 +11,14 @@ extern unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] ;
 
 
 
-///////////////// UART /////////////////
+////////////////// UART ///////////////////////////
 extern unsigned char    U1_Rx_DataPosition;
+
+///////////////// DEVICE STATE /////////////////
+unsigned char Key_Reg_RQST_Flag = RESET;
+
+
+
 
 //Have to Check
 unsigned char Call_Button_Flag ;
@@ -33,7 +39,7 @@ unsigned char TX_CMD = 0x00 ;
 extern unsigned char U1_Rx_Flag ;
 
 unsigned char Cognition_Disable_Flag = RESET;
-unsigned char Key_Reg_RQST_Flag = RESET;
+
 unsigned char RF_Data_Confirm_Flag = RESET;
 unsigned char Key_Reg_End_Flag = RESET;
 unsigned char RF_DATA_RQST_Flag = RESET;
@@ -137,33 +143,30 @@ void Packet_handler(void)
 ///////////////////////////////////////////////////////////////////////////////
 void Passing(void)   
 {
-
           if( CMD_Check( Rx_Buffer, sizeof(CMD_Buffer)/sizeof(unsigned char)))    
-                                                                                            {   Data_Check ++; }
+          {   
+            Data_Check ++; 
+          }
            
-           
-          if( Rx_Buffer[(Rx_LENGTH-1)] == Check_Checksum())        {   Data_Check ++; }
-           
-   
-          
+          if( Rx_Buffer[(Rx_LENGTH-1)] == Check_Checksum())        
+          {   
+            Data_Check ++; 
+          }
+
           if(Data_Check != 2 )
           {
-                        
-                        
-                  Data_Check = 0;
-                
-                  Rx_Count =0;
-                  Rx_Compli_Flag = RESET ;
-     
-                            
-                  for(unsigned char i = 0; i<92 ; i++ )
-                  {
+                Data_Check = 0;
+              
+                Rx_Count =0;
+                Rx_Compli_Flag = RESET ;
+
+                for(unsigned char i = 0; i<92 ; i++ )
+                {
                     Rx_Buffer[i] = 0;
                     Tx_Buffer[i] = 0;
-                  }
+                 }
            }
- 
-} // end of passing 
+ } // end of passing 
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -298,6 +301,7 @@ void Response(void)
                 Reg_key_Value_Receive_Flag = RESET;
                 
 #if 1                  
+                #ifdef Consol_LOG 
                 printf ("\r\n");
                 printf ("RF Key CNT : %d \r\n ",RF_Key_CNT) ;
                 printf ("Tx Length : %d \r\n ",Tx_LENGTH) ;
@@ -311,6 +315,7 @@ void Response(void)
                 {
                   printf ("%x, ",Tx_Buffer[tmp]) ;
                 }
+                #endif
 #endif                       
           }
   
@@ -370,419 +375,302 @@ void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수
 
 void CMD(void)
 {
+    unsigned char Requested_CMD;
+    Requested_CMD = Rx_Buffer[3];
+      
+    switch(Requested_CMD)
+    {
+        /***************** 0x11 상태 값 요청 ****************/
+        case RF_STATUS_RQST:  // 0x11 상태 값 요청 
+        { 
+              Tx_LENGTH = 8 ; 
+              TX_CMD = RF_STAUS_RSPN ;
+                    
+              if((RF_Data_Confirm_Flag == SET) || (RF_DATA_RQST_Flag == SET)|| (Status_Value_Clear_Flag == SET) 
+                || (Reg_Mode_Start_Flag == SET) || (Key_Reg_RQST_Flag == SET) ||  (Key_Reg_End_Flag == SET) ) 
+              {                                                         //  각 기능 구현 중 다시 평상시 패킷 들어올때 평상시 패킷 전송 
+                     Clear_Tx_Buffer();
+                     if(Call_Button_Flag == SET)                // RF 모듈 뽑았을 때 버퍼 클리어로 인해 호출 안되는 현상 방지
+                     {
+                            Call_Button_Flag = RESET;
+                            Tx_Buffer[5] |= 0x01;
+                     }
+                    
+                     if(Key_Reg_RQST_Flag)                      // 등록 모드 중 평상 시 폴링시 RF 모듈를 등록 모드 종료시킴
+                     {                                                     // 중간에 월패트가  꺼지고 나서 다시 켰을때 
+                            GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_RESET);  //  LED OFF
+                            U1_Paket_Type = 0xA0;                // 등록 종료 RF 모듈에 알림
+                            USART1_TX();
+                     }
 
-        switch(Rx_Buffer[3])
+                     RF_Data_Confirm_Flag = RESET;             // 각 기능에 대한 플래그 초기화
+                     Key_Reg_End_Flag = RESET;
+                     Reg_Mode_Start_Flag = RESET;
+                     Key_Reg_RQST_Flag = RESET;
+                     Key_Reg_End_Flag = RESET;
+                     Status_Value_Clear_Flag = RESET;
+                      
+                     Key_Reg_U1_Send_Flag = RESET;             // 등록 실패 후 다시 재등록이 안됨 
+                      
+                     Reg_key_Value_Receive_Flag = RESET;
+              } 
+
+              RF_DATA_RQST_Flag = RESET;                        //전, 사이에 키인식 되면 키값이 들어오는것 방지
+    
+              if(U1_Tx_Flag == RESET)                             // RF 모듈 폴링시 메인문 돌동안1번만 보내게 하는 루틴
+              {
+                        U1_Tx_Flag = SET;
+                        U1_Paket_Type = 0xD0;  
+                        U1_Tx_Buffer[1] = 0xD0;
+                        U1_Tx_Buffer[2] = Rx_Buffer[5];
+                        U1_Tx_Buffer[3] = Rx_Buffer[6];
+    
+                        USART1_TX();
+             
+                        Time_Out_Flag = SET; //  타임 아웃
+               }
+        }
+        break;
+        
+        
+        /***************** 0x12  상태값 해제 요청 ****************/      
+        case RF_STATUS_CLR_RQST:  // 0x12  상태값 해제 요청
+        {
+              Tx_LENGTH = 7 ; 
+
+              Status_Value_Clear_Flag = SET;
+
+              TX_CMD = RF_STAUS_CLR_RSPN;
+
+              if((Rx_Buffer[5] & 0x80 ) == 0x80)  // 상태 값 해제 패킷에 따라 비트 클리어 
+              {
+                      Tx_Buffer[5] &= 0x7F;
+              }
+              
+              if((Rx_Buffer[5] & 0x01 ) == 0x01)
+              {
+                       Tx_Buffer[5] &= 0xFE;
+               }
+         }
+        break;
+        
+        /***************** 0x21 RF 데이터 요청  ****************/      
+        case RF_DATA_RQST:      // 0x21 RF 데이터 요청 
         {
           
-          /***************** 0x11 상태 값 요청 ****************/
-                case RF_STATUS_RQST:  // 0x11 상태 값 요청 
-                { 
-                  
-                      Tx_LENGTH = 8 ; 
-                      TX_CMD = RF_STAUS_RSPN ;
-         
-                    
-                               
-                                 
-                      if((RF_Data_Confirm_Flag == SET) || (RF_DATA_RQST_Flag == SET)|| (Status_Value_Clear_Flag == SET) 
-                        || (Reg_Mode_Start_Flag == SET) || (Key_Reg_RQST_Flag == SET) ||  (Key_Reg_End_Flag == SET) ) 
-                      {                                                         //  각 기능 구현 중 다시 평상시 패킷 들어올때 평상시 패킷 전송 
-   
-                             Clear_Tx_Buffer();
-                            
-                             if(Call_Button_Flag == SET)                // RF 모듈 뽑았을 때 버퍼 클리어로 인해 호출 안되는 현상 방지
-                             {
-                                    Call_Button_Flag = RESET;
-                                    Tx_Buffer[5] |= 0x01;
-                             }
-                            
-                             if(Key_Reg_RQST_Flag)                      // 등록 모드 중 평상 시 폴링시 RF 모듈를 등록 모드 종료시킴
-                             {                                                     // 중간에 월패트가  꺼지고 나서 다시 켰을때 
-                                    GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_RESET);  //  LED OFF
-                                    U1_Paket_Type = 0xA0;                // 등록 종료 RF 모듈에 알림
-                                    USART1_TX();
-                             }
-                             
-                             
-                              RF_Data_Confirm_Flag = RESET;             // 각 기능에 대한 플래그 초기화
-                              Key_Reg_End_Flag = RESET;
-                              Reg_Mode_Start_Flag = RESET;
-                              Key_Reg_RQST_Flag = RESET;
-                              Key_Reg_End_Flag = RESET;
-                              Status_Value_Clear_Flag = RESET;
-                              
-                              Key_Reg_U1_Send_Flag = RESET;             // 등록 실패 후 다시 재등록이 안됨 
-                              
-                              Reg_key_Value_Receive_Flag = RESET;
-                            
-                      } 
-                      
+              RF_Key_CNT = Rx_Buffer[5];  // 요청한 데이터 패킷 갯수만 보내기 위함 
+              
+              TX_CMD = RF_DATA_RSPN; //  평상시 스마트 키 인식시 
 
-               
-                    
-                        
-                      RF_DATA_RQST_Flag = RESET;                        //전, 사이에 키인식 되면 키값이 들어오는것 방지
+              Tx_Buffer[5] = RF_Key_CNT;
+              
+              RF_DATA_RQST_Flag = SET;
+
+              if(Usual_RF_Detec_Flag == RESET)
+              {
+                    Tx_Buffer[5] = 0x00;
+                    RF_Key_CNT = 0;
+                    Tx_LENGTH = 7;
+                    RF_DATA_RQST_Flag = RESET;
+              }
+        }
+        break;
+
+        /***************** 0x22  스마트키 데이터 확인  ****************/      
+        case RF_DATA_CONFIRM_RQST:  // 0x22  스마트키 데이터 확인
+        {
+          
+                U1_Rx_Count = 0;
+                KEY_Number_to_Confirm = Rx_Buffer[5];                   // 요청 갯수 저장
                 
-                        
-                        
-                       if(U1_Tx_Flag == RESET)                             // RF 모듈 폴링시 메인문 돌동안1번만 보내게 하는 루틴
-                       {
-                        
-                                U1_Tx_Flag = SET;
-                         
-                                 U1_Paket_Type = 0xD0;  
-                                 U1_Tx_Buffer[1] = 0xD0;
-                                 U1_Tx_Buffer[2] = Rx_Buffer[5];
-                                 U1_Tx_Buffer[3] = Rx_Buffer[6];
             
-                                 USART1_TX();
-                     
-                                Time_Out_Flag = SET; //  타임 아웃
-                     
-                                
-                       }
-                       
+                  
+                RF_Data_Confirm(KEY_Number_to_Confirm);                 // 전송 데이터 확인 함수
+                  
+                TX_CMD = RF_DATA_CONFIRM_RSPN ;                       
              
-
-                }
-                break;
-                
-                
-          /***************** 0x12  상태값 해제 요청 ****************/      
-                case RF_STATUS_CLR_RQST:  // 0x12  상태값 해제 요청
-                {
+            
+                Tx_Buffer[5] = KEY_Number_to_Confirm;
+                Tx_LENGTH = 9;
                   
-                      Tx_LENGTH = 7 ; 
-          
-                      Status_Value_Clear_Flag = SET;
-                      
-             
-                      
-                      TX_CMD = RF_STAUS_CLR_RSPN;
-          
-    
-                      
-                      if((Rx_Buffer[5] & 0x80 ) == 0x80)  // 상태 값 해제 패킷에 따라 비트 클리어 
-                      {
-                        
-                              Tx_Buffer[5] &= 0x7F;
-                              
-                      }
-                      
-                      if((Rx_Buffer[5] & 0x01 ) == 0x01)
-                      {
-                        
-                              Tx_Buffer[5] &= 0xFE;
-                              
-                      }
-                      
-                      
-                              
-                      
-                }
-                break;
-                
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                
-                
-                
-                /***************** 0x21 RF 데이터 요청  ****************/      
-                case RF_DATA_RQST:      // 0x21 RF 데이터 요청 
-                {
-                  
-                      RF_Key_CNT = Rx_Buffer[5];  // 요청한 데이터 패킷 갯수만 보내기 위함 
-                      
-                      TX_CMD = RF_DATA_RSPN; //  평상시 스마트 키 인식시 
-                      
-                      
-                      Tx_Buffer[5] = RF_Key_CNT;
-                      
-                      RF_DATA_RQST_Flag = SET;
-                  
-                      
-                      if(Usual_RF_Detec_Flag == RESET)
-                      {
-                            Tx_Buffer[5] = 0x00;
-                            RF_Key_CNT = 0;
-                            Tx_LENGTH = 7;
-                            RF_DATA_RQST_Flag = RESET;
-                      }
-                     
-                       
-                }
-                break;
-                
-                
-                /***************** 0x22  스마트키 데이터 확인  ****************/      
-                case RF_DATA_CONFIRM_RQST:  // 0x22  스마트키 데이터 확인
-                {
-                  
-                        U1_Rx_Count = 0;
-                        KEY_Number_to_Confirm = Rx_Buffer[5];                   // 요청 갯수 저장
-                        
-                    
-                          
-                        RF_Data_Confirm(KEY_Number_to_Confirm);                 // 전송 데이터 확인 함수
-                          
-                        TX_CMD = RF_DATA_CONFIRM_RSPN ;                       
-                     
-                    
-                        Tx_Buffer[5] = KEY_Number_to_Confirm;
-                        Tx_LENGTH = 9;
-                          
-                         RF_DATA_RQST_Flag = RESET;  
-                         
-                         RF_Data_Confirm_Flag = SET;
-                         
-                         Usual_RF_Detec_Flag = RESET;
-                         
-                   
-                 }
-                 break;
+                 RF_DATA_RQST_Flag = RESET;  
                  
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                   
-                      
-                /***************** 0x31  스마트키 등록 모드 시작  ****************/  
-                case REG_MODE_START_RQST:  // 0x31  스마트키 등록 모드 시작
-                {
-                  
-                        TX_CMD = REG_MODE_START_RSPN ;    
-                       
-                       
-                        Key_Reg_RQST_Flag = SET;
-                        Tx_LENGTH = 7;
-                        
-                        if(Call_Button_Flag == SET)                     // 중간에 호출 버튼 누름 방지
-                        {
-                          
-                            Tx_Buffer[5] = 0x00;
-                            Call_Button_Flag = RESET;
-                          
-                        }
-                         
-                        RF_DATA_RQST_Flag = RESET;     //  동록 모드 시작  전, 사이에 키인식 되면 키값이 들어오는것 방지
-                        Reg_Mode_Start_Flag = SET;
-                        
-                        U1_Rx_Count = 0;                        // 등록 모드 시작 전, 키 인식 되면  U1_Rx_Count 증가되서 CA나 BA를 못받게 됨
-
-                      
-                 }
-                 break;  
+                 RF_Data_Confirm_Flag = SET;
                  
+                 Usual_RF_Detec_Flag = RESET;
                  
-            /************************** 0x32  스마트키 등록 요청 ********************************/          
-                case REG_KEY_DATA_RQST:  // 0x32  스마트키 등록 요청
-                {
-                    
-                       TX_CMD = REG_KEY_DATA_RSPN ;    
-                      
-                       Key_Reg_RQST_Flag = SET;
-                       Reg_Mode_Start_Flag = RESET;
-                       
-                        Key_Reg_Timeout_flag = RESET;
-                        Key_Reg_Timeout_CNT =0; // 등록 모드 타임아웃 초기화 
-                     
-                       
-                     GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_SET);  // 중간에 현관카메라가 꺼져지고 나서 다시 켰을때 등록모드를 유지하기 위해서 
-                     
            
-                       if(Key_Info_Compare())                   // 이전 키값과 다르면 
-                       {
-                              Key_Reg_U1_Send_Flag = RESET;
-                              Reg_Compli_Flag = RESET;
-                              Key_Save_Flag = RESET;
-                       }
-                       
-                     
-                       if(Key_Save_Flag == RESET)  // 월패드에서 등록 실패시 키정보 비교하기위해 임시저장 루틴
-                       {
-                               for(char i = 5 ; i < 14 ; i++)
-                               {
-                                       Temp_buffer[i] = Rx_Buffer[i];
-                               }
-                               
-                               Key_Save_Flag = SET;
-                               
-                            
-                       }
-                     
-                     
+         }
+         break;
+         
+        /***************** 0x31  스마트키 등록 모드 시작  ****************/  
+        case REG_MODE_START_RQST:  // 0x31  스마트키 등록 모드 시작
+        {
+                TX_CMD = REG_MODE_START_RSPN ;    
                
-                       if(Key_Reg_U1_Send_Flag == RESET) 
-                       {
-                         
-                             Key_Reg_U1_Send_Flag = SET;
-                             
-                             U1_Paket_Type = 0xC0;                    // 등록 요청 RF 모듈에 알림 
-                             
-                             USART1_TX();
-                        }
-                    
-                       U1_Rx_Count = 0 ;  // 등록 키값 전달 전에 평상시 키값 들어오는 것 방지 
-
-                     
-                        
-                           
-                      if(Reg_key_Value_Receive_Flag == SET)  // 등록 키값 받았을때
-                      { 
-                    
-                            if(Key_Reg_End_Button_Flag == RESET)             // 등록 종료버튼  안눌렀을 시
-                            {
-                              
-                     
-                              
-                              
-                                    RF_Key_CNT = 1;
-                                    Tx_LENGTH = 23;
-                                     
-                                    Tx_Buffer[5] = 0x01;
-                            
-                                  
-                                    
-                                    Reg_Compli_Flag = SET; 
-                                           
-                             }
-                            
-                            
-                            if(Key_Reg_End_Button_Flag == SET)             // 등록 종료버튼 누를 시 받은 패킷 지워야!!
-                            {
-                                  Reg_key_Value_Receive_Flag = RESET;
-                    
-                         
-                                  Tx_LENGTH = 7;
-                                  Tx_Buffer[5] |= 0x02;
-                                 
-                                  Key_Reg_End_Button_Flag = RESET;  // -> 클리어 시점 다시 정하기 
-                            }
-                            
-                          
-                      } // END of  if (등록 키값 받았을때 )
-                      
-                      
-                      
-                      
-                      
-                      
-                      if(Reg_key_Value_Receive_Flag == RESET)  // 등록 키값  안받았을때 
-                      {
-                          
-                             if((!(Key_Info_Compare())) && (Reg_Compli_Flag == SET))  // 패킷 못가져 갔을때  이전 키값과 같을때 
-                             {
-                                    RF_Key_CNT = 1;
-                                    Tx_LENGTH = 23;
-                                     
-                                    Tx_Buffer[5] = 0x01;
-                                    
-                                    Reg_key_Value_Receive_Flag = SET;
-                             }
-                          
-
-                             if(Reg_Compli_Flag == RESET)
-                             {
-                          
-                                      if(Key_Reg_End_Button_Flag == RESET)              // 등록 종료버튼  안눌렀을 시
-                                      {
-                                        
-                              
-                                               
-                                            Tx_LENGTH = 7;
-                                            Tx_Buffer[5] &= 0xFC;
-                                    
-                                    
-                                      }
-                                      
-                                             
-                                      if(Key_Reg_End_Button_Flag == SET)             // 등록 종료버튼 누를 시
-                                      {
-                         
-                                           Tx_LENGTH = 7;
-                                           Tx_Buffer[5] |= 0x02;
-                                            Key_Reg_End_Button_Flag = RESET;
-                                      }
-                                      
-                               }
-                 
-                            
-                      }  // END of if (등록 키값 안받았을때 )
-                      
-                 
-                       Key_Reg_Timeout_flag = SET;  // 등록 모드 타임아웃 세팅 
-                     
-                 }// END of case
-                 
-                 
-                 break;  
-                 
-                 
-            /*************************** 0x33  스마트키 등록 모드 종료  ********************************/
-                 
-                case REG_MODE_END_RQST:  // 0x33  스마트키 등록 모드 종료 
+                Key_Reg_RQST_Flag = SET;
+                Tx_LENGTH = 7;
+                
+                if(Call_Button_Flag == SET)                     // 중간에 호출 버튼 누름 방지
                 {
-                  
-                       TX_CMD = REG_MODE_END_RSPN ;    
-                        
-                       Tx_LENGTH = 7;
-                       
-                       Tx_Buffer[5] = 0x01;
-
-                        RF_DATA_RQST_Flag = RESET;     //  동록 모드 시작  전에 키인식 되면 키값이 들어오는것 방지 
-
-                        Key_Reg_End_Flag = SET;
-                        Key_Reg_RQST_Flag = RESET;
-                        Reg_Mode_Start_Flag = RESET;
-                      
-                        TIM_SetCompare1(TIM3,40);
-                        Delay(80);
-                        TIM_SetCompare1(TIM3,0); 
-                        
-                      
-                       GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_RESET);  //  LED OFF
-                       
-                        for(char i = 5 ; i < 14 ; i++)
-                        {
-                                Temp_buffer[i] = 0;
-                        }  
-                       
-                       U1_Paket_Type = 0xA0;  // 등록 종료 RF 모듈에 알림
-                       USART1_TX();
-                      
-                   
-                     
-                 }
-                 break;  
-                 
-     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////            
-                 
-                 
-                 /*************************** 0x01 기기 정보 요청 ********************************/
-                case EQUIP_INFOR_RQST:              // 0x01 기기 정보 요청
-                {
-                  
-                      TX_CMD = EQUIP_INFOR_RSPN ; 
-                      
-                      Tx_LENGTH = 15;
-                      
-                      Device_Info_Flag = SET;
-                      
-                      Tx_Buffer[5] = 0x00;
-                      Tx_Buffer[6] = 0x00;
-                      Tx_Buffer[7] = 0x01;
-                      Tx_Buffer[8] = 0x0D;
-                      Tx_Buffer[9] = 0x0C;
-                      Tx_Buffer[10] = 0x04;
-                      Tx_Buffer[11] = 0x01; 
-                      Tx_Buffer[12] = 0x00;
-                      Tx_Buffer[13] = 0x60;
-                    
+                    Tx_Buffer[5] = 0x00;
+                    Call_Button_Flag = RESET;
                 }
-                 break;
-                  
-         } //  END of switch 
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////            
-                          
+                 
+                RF_DATA_RQST_Flag = RESET;     //  동록 모드 시작  전, 사이에 키인식 되면 키값이 들어오는것 방지
+                Reg_Mode_Start_Flag = SET;
+                
+                U1_Rx_Count = 0;                        // 등록 모드 시작 전, 키 인식 되면  U1_Rx_Count 증가되서 CA나 BA를 못받게 됨
+         }
+         break;  
+         
+         
+        /************************** 0x32  스마트키 등록 요청 ********************************/          
+        case REG_KEY_DATA_RQST:  // 0x32  스마트키 등록 요청
+        {
+               TX_CMD = REG_KEY_DATA_RSPN ;    
+              
+               Key_Reg_RQST_Flag = SET;
+               Reg_Mode_Start_Flag = RESET;
+               
+               Key_Reg_Timeout_flag = RESET;
+               Key_Reg_Timeout_CNT =0; // 등록 모드 타임아웃 초기화 
+
+               GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_SET);  // 중간에 현관카메라가 꺼져지고 나서 다시 켰을때 등록모드를 유지하기 위해서 
              
-    
+   
+               if(Key_Info_Compare())                   // 이전 키값과 다르면 
+               {
+                      Key_Reg_U1_Send_Flag = RESET;
+                      Reg_Compli_Flag = RESET;
+                      Key_Save_Flag = RESET;
+               }
+
+               if(Key_Save_Flag == RESET)  // 월패드에서 등록 실패시 키정보 비교하기위해 임시저장 루틴
+               {
+                       for(char i = 5 ; i < 14 ; i++)
+                       {
+                               Temp_buffer[i] = Rx_Buffer[i];
+                       }
+                       
+                       Key_Save_Flag = SET;
+               }
+
+               if(Key_Reg_U1_Send_Flag == RESET) 
+               {
+                     Key_Reg_U1_Send_Flag = SET;
+                     U1_Paket_Type = 0xC0;                    // 등록 요청 RF 모듈에 알림 
+                     USART1_TX();
+                }
+            
+               U1_Rx_Count = 0 ;  // 등록 키값 전달 전에 평상시 키값 들어오는 것 방지 
+
+              if(Reg_key_Value_Receive_Flag == SET)  // 등록 키값 받았을때
+              { 
+                    if(Key_Reg_End_Button_Flag == RESET)             // 등록 종료버튼  안눌렀을 시
+                    {
+                            RF_Key_CNT = 1;
+                            Tx_LENGTH = 23;
+                             
+                            Tx_Buffer[5] = 0x01;
+
+                            Reg_Compli_Flag = SET; 
+                     }
+
+                    if(Key_Reg_End_Button_Flag == SET)             // 등록 종료버튼 누를 시 받은 패킷 지워야!!
+                    {
+                          Reg_key_Value_Receive_Flag = RESET;
+
+                          Tx_LENGTH = 7;
+                          Tx_Buffer[5] |= 0x02;
+                         
+                          Key_Reg_End_Button_Flag = RESET;  // -> 클리어 시점 다시 정하기 
+                    }
+              } // END of  if (등록 키값 받았을때 )
+
+              if(Reg_key_Value_Receive_Flag == RESET)  // 등록 키값  안받았을때 
+              {
+                     if((!(Key_Info_Compare())) && (Reg_Compli_Flag == SET))  // 패킷 못가져 갔을때  이전 키값과 같을때 
+                     {
+                            RF_Key_CNT = 1;
+                            Tx_LENGTH = 23;
+                             
+                            Tx_Buffer[5] = 0x01;
+                            
+                            Reg_key_Value_Receive_Flag = SET;
+                     }
+
+                     if(Reg_Compli_Flag == RESET)
+                     {
+                              if(Key_Reg_End_Button_Flag == RESET)              // 등록 종료버튼  안눌렀을 시
+                              {
+                                    Tx_LENGTH = 7;
+                                    Tx_Buffer[5] &= 0xFC;
+                              }
+                              
+                              if(Key_Reg_End_Button_Flag == SET)             // 등록 종료버튼 누를 시
+                              {
+                                   Tx_LENGTH = 7;
+                                   Tx_Buffer[5] |= 0x02;
+                                    Key_Reg_End_Button_Flag = RESET;
+                              }
+                       }
+              }  // END of if (등록 키값 안받았을때 )
+               Key_Reg_Timeout_flag = SET;  // 등록 모드 타임아웃 세팅 
+             
+         }// END of case
+         break;  
+
+        /*************************** 0x33  스마트키 등록 모드 종료  ********************************/
+        case REG_MODE_END_RQST:  // 0x33  스마트키 등록 모드 종료 
+        {
+               TX_CMD = REG_MODE_END_RSPN ;    
+               Tx_LENGTH = 7;
+               Tx_Buffer[5] = 0x01;
+                RF_DATA_RQST_Flag = RESET;     //  동록 모드 시작  전에 키인식 되면 키값이 들어오는것 방지 
+
+                Key_Reg_End_Flag = SET;
+                Key_Reg_RQST_Flag = RESET;
+                Reg_Mode_Start_Flag = RESET;
+              
+                TIM_SetCompare1(TIM3,40);
+                Delay(80);
+                TIM_SetCompare1(TIM3,0); 
+
+               GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_RESET);  //  LED OFF
+               
+                for(char i = 5 ; i < 14 ; i++)
+                {
+                        Temp_buffer[i] = 0;
+                }  
+               
+               U1_Paket_Type = 0xA0;  // 등록 종료 RF 모듈에 알림
+               USART1_TX();
+         }
+         break;  
+         
+         /*************************** 0x01 기기 정보 요청 ********************************/
+        case EQUIP_INFOR_RQST:              // 0x01 기기 정보 요청
+        {
+              TX_CMD = EQUIP_INFOR_RSPN ; 
+              
+              Tx_LENGTH = 15;
+              
+              Device_Info_Flag = SET;
+              
+              Tx_Buffer[5] = 0x00;
+              Tx_Buffer[6] = 0x00;
+              Tx_Buffer[7] = 0x01;
+              Tx_Buffer[8] = 0x0D;
+              Tx_Buffer[9] = 0x0C;
+              Tx_Buffer[10] = 0x04;
+              Tx_Buffer[11] = 0x01; 
+              Tx_Buffer[12] = 0x00;
+              Tx_Buffer[13] = 0x60;
+            
+        }
+         break;
+     } //  END of switch 
 } // END of CMD function
   
 

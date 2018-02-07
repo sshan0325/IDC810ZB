@@ -18,25 +18,18 @@
 
 #define EQUIP_INFOR_RQST        0x01
 #define EQUIP_INFOR_RSPN        0X81
-
 #define RF_STATUS_RQST          0x11
 #define RF_STAUS_RSPN           0x91
-
 #define RF_STATUS_CLR_RQST      0x12
 #define RF_STAUS_CLR_RSPN       0x92
-
 #define RF_DATA_RQST            0x21
 #define RF_DATA_RSPN            0xA1
-
 #define RF_DATA_CONFIRM_RQST    0x22
 #define RF_DATA_CONFIRM_RSPN    0xA2
-
 #define REG_MODE_START_RQST     0x31
 #define REG_MODE_START_RSPN     0xB1
-
 #define REG_KEY_DATA_RQST       0x32
 #define REG_KEY_DATA_RSPN       0xB2
-
 #define REG_MODE_END_RQST       0x33
 #define REG_MODE_END_RSPN       0xB3
 

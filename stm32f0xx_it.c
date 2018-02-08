@@ -26,8 +26,8 @@ unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] = {0};
 /*************************** USART 2 ******************************/
 unsigned char Rx_Count = 0 ;
 unsigned char Rx_Compli_Flag = RESET;
-unsigned char Rx_Buffer[128] = {0};
-
+unsigned char U2_Rx_Buffer[128] = {0};
+extern unsigned char U2_Tx_Buffer[128] ;
 
 /*************************** TIMER ********************************/
 unsigned int    SystemTime_Tick=0;
@@ -44,14 +44,16 @@ unsigned int Key_Reg_Timeout_CNT = 0;
 unsigned int RF_Detec_Timeout_CNT = 0;
 unsigned char Usaul_RF_Detec_Erase_Flag = RESET;
 unsigned char RF_Detec_Timeout_Flag = RESET;
-
-
-
-
 unsigned char Reg_key_Value_Receive_Flag = RESET;
 unsigned char Usual_RF_Detec_Flag = RESET;
-
 extern unsigned char Key_Reg_End_Button_Flag ;
+extern unsigned char Time_Out_Flag;
+extern unsigned char RF_Key_Detec_CNT_Flag ;
+volatile unsigned char Time_Out_Flag_CNT = 0;
+unsigned int Watch_Dog_Flag_CNT = 0;
+extern unsigned char g_WatchdogEvent ;
+unsigned char CNT = 0;
+unsigned char Watch_Dog_Flag = SET ;
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private functions ---------------------------------------------------------*/
@@ -111,17 +113,6 @@ void SysTick_Handler(void)
 }
 
 
-extern unsigned char Tx_Buffer[128] ;
-//unsigned char Timer14_Delay_CNT = 0;
-//extern unsigned char Response_Delay_Flag ;
-extern unsigned char Time_Out_Flag;
-extern unsigned char RF_Key_Detec_CNT_Flag ;
-volatile unsigned char Time_Out_Flag_CNT = 0;
-
-unsigned int Watch_Dog_Flag_CNT = 0;
-extern unsigned char g_WatchdogEvent ;
-unsigned char CNT = 0;
-unsigned char Watch_Dog_Flag = SET ;
 
 void TIM14_IRQHandler(void) //10ms
 {
@@ -153,7 +144,7 @@ void TIM14_IRQHandler(void) //10ms
               Time_Out_Flag = RESET;
               Time_Out_Flag_CNT = 0;
               
-              Tx_Buffer[5] |= 0x80;
+              U2_Tx_Buffer[5] |= 0x80;
               RF_Key_Detec_CNT_Flag = SET;
 
         }
@@ -201,10 +192,10 @@ void USART2_IRQHandler(void)     // 월패트 통신 인터럽트
 {
         if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
         {
-                Rx_Buffer[Rx_Count++] = USART_ReceiveData(USART2);  
-                if(  Rx_Buffer[0] != STX )            {  Rx_Count = 0; }
-                if(  (Rx_Count == 2) && (Rx_Buffer[1] != RF_Camera_ID) )   { Rx_Count = 0; }
-                if( Rx_Buffer[2] == Rx_Count ) 
+                U2_Rx_Buffer[Rx_Count++] = USART_ReceiveData(USART2);  
+                if(  U2_Rx_Buffer[0] != STX )            {  Rx_Count = 0; }
+                if(  (Rx_Count == 2) && (U2_Rx_Buffer[1] != RF_Camera_ID) )   { Rx_Count = 0; }
+                if( U2_Rx_Buffer[2] == Rx_Count ) 
                 {
                       Rx_Compli_Flag = SET ; 
                       Rx_Count = 0;
@@ -217,10 +208,6 @@ void USART2_IRQHandler(void)     // 월패트 통신 인터럽트
         } // end of TX if
     
 } 
-
-
-
-
 
 void USART1_IRQHandler(void)     
 {
@@ -236,5 +223,3 @@ void USART1_IRQHandler(void)
 
     }
 }
-
-

@@ -13,7 +13,7 @@ static __IO uint32_t    TimingDelay;
 
 extern unsigned char    Reg_Mode_Start_Flag;
 extern unsigned char    Key_Reg_RQST_Flag ;
-extern unsigned char    Tx_Buffer[128];
+extern unsigned char    U2_Tx_Buffer[128];
 unsigned char           Key_Reg_End_Button_Flag = RESET;
 
 void BuzzerRun(unsigned char Freq, unsigned char BuzzerCount, unsigned char Ontime, unsigned char Offtime)
@@ -48,7 +48,7 @@ void Key_Polling(void)
       
       if( Reg_Mode_Start_Flag == SET)  // 등록 모드 시작시 호출 버튼 누름
       {
-         Tx_Buffer[5] |= 0x01;
+         U2_Tx_Buffer[5] |= 0x01;
          GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_SET);
              
          BuzzerRun(100, 1,80,10);
@@ -67,7 +67,7 @@ void Key_Polling(void)
 
       if(Key_Reg_RQST_Flag == RESET)  //  평상시 호출시
       {
-         Tx_Buffer[5] |= 0x01;
+         U2_Tx_Buffer[5] |= 0x01;
          
          #ifdef Consol_LOG 
          printf ("\r\n[System                     ] Calling is Requested\r\n");     

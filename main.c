@@ -7,15 +7,14 @@
 
 /* Private variables ---------------------------------------------------------*/
 //Seungshin Using
-/* UART  Ch1-------------------------------------------------------------*/
+/* UART  Ch1 ------------------------------------------------------------*/
 extern unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE];
 extern unsigned char U1_Rx_Count;    
 
-
-
+/* UART  Ch2 ------------------------------------------------------------*/
+extern unsigned char    U2_Tx_Buffer[128];
 
 //Need to Check
-extern unsigned char    Tx_Buffer[128];
 unsigned char Button_Flag = RESET;
 
 
@@ -45,7 +44,7 @@ void RF_Packet_Erase_handler(void)
             RF_Key_CNT = 0;                                     // RF 관련 카운트 및 플래그 초기화
             U1_Rx_Count = 0;
             
-            Tx_Buffer[5] = 0x00;
+            U2_Tx_Buffer[5] = 0x00;
                   
              Tx_LENGTH = 7;
              RF_DATA_RQST_Flag = RESET;

@@ -42,7 +42,7 @@ void EXTI4_15_Config(void);
 
 void Packet_handler(void); 
 void RF_Packet_Erase_handler(void);
-void RF_Key_Packet_handler(void);
+void RF_Key_Paket_handler(void);
 
 void Delay(__IO uint32_t nTime);
 void TimingDelay_Decrement(void);

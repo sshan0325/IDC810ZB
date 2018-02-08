@@ -5,9 +5,7 @@
 void RF_Data_Confirm(unsigned char CNT);
 
 /* Private define ------------------------------------------------------------*/
-#define RS485TX_ENABLE          GPIO_WriteBit(GPIOB,  GPIO_Pin_0 , (BitAction) Bit_SET)
-#define RS485TX_DISABLE         GPIO_WriteBit(GPIOB,  GPIO_Pin_0 , (BitAction) Bit_RESET);
-#define RF_KEY_PACKET_SIZE      17
+#define RF_KEY_PACKET_SIZE 17
 
 #define RF_KEY_CHECK            0xDA
 #define RF_KEY_REG_SUCC         0xCA

@@ -112,16 +112,15 @@ void Packet_handler(void)
           if(Rx_Compli_Flag == SET)
           {
                 Rx_LENGTH = U2_Rx_Buffer[2];
-                Passing();
+                //Passing();
                 if(Watch_Dog_init_Flag)                 //  초기 통신 시작시 1회 왓치독 셋팅 
                 {
                     Watch_Dog_init_Flag = RESET;
                     WatchDog_Init(); 
                 }
 
-                if(Data_Check == 2) 
+                if( PacketValidation() == VALID) 
                 {
-                   Data_Check = 0;
                    CMD();
                    if((RF_Key_Detec_CNT_Flag))  // 평상시 키 인식시 
                     {
@@ -138,41 +137,36 @@ void Packet_handler(void)
                         Response();
                     }
                 }
-                
           }
-          
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 /******************** 월패드  패킷 검사 함수  *******************/
 ///////////////////////////////////////////////////////////////////////////////
-void Passing(void)   
+unsigned char PacketValidation(void)   
 {
-          if( CMD_Check( U2_Rx_Buffer, sizeof(CMD_Buffer)/sizeof(unsigned char)))    
-          {   
-            Data_Check ++; 
-          }
-           
-          if( U2_Rx_Buffer[(Rx_LENGTH-1)] == Check_Checksum())        
-          {   
-            Data_Check ++; 
-          }
+    unsigned char Result=0;
+    
+    if( CMD_Check( U2_Rx_Buffer, sizeof(CMD_Buffer)/sizeof(unsigned char)))    
+        Result ++; 
+     
+    if( U2_Rx_Buffer[(Rx_LENGTH-1)] == Check_Checksum())        
+        Result ++; 
 
-          if(Data_Check != 2 )
+    if(Result != VALID )
+    {
+          U2_Rx_Count =0;
+          Rx_Compli_Flag = RESET ;
+          for(unsigned char i = 0; i<92 ; i++ )
           {
-                Data_Check = 0;
-              
-                U2_Rx_Count =0;
-                Rx_Compli_Flag = RESET ;
-
-                for(unsigned char i = 0; i<92 ; i++ )
-                {
-                    U2_Rx_Buffer[i] = 0;
-                    U2_Tx_Buffer[i] = 0;
-                 }
+              U2_Rx_Buffer[i] = 0;
+              U2_Tx_Buffer[i] = 0;
            }
- } // end of passing 
+     }
+
+    return Result;
+ }
 
 
 ///////////////////////////////////////////////////////////////////////////

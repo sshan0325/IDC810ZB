@@ -22,8 +22,6 @@ extern unsigned char RF_DATA_RQST_Flag;
 extern unsigned char Usual_RF_Detec_Flag;
 extern unsigned char RF_Key_CNT ;
 extern unsigned char Usaul_RF_Detec_Erase_Flag;
-//flag
-extern unsigned char RF_Key_Detec_CNT_Flag ;
 
 
 

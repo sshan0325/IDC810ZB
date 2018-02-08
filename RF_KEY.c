@@ -15,6 +15,8 @@ extern unsigned char    U1_Rx_DataPosition;
 extern unsigned char U2_Rx_Buffer[128];  
 extern unsigned char U2_Tx_Buffer[128];  
 
+unsigned char RF_Key_Data[128] = {0};
+
 
 //Need to Check
 unsigned char RF_Packet_1_4 = 0x00;
@@ -26,7 +28,6 @@ extern unsigned char RF_Detec_Timeout_Flag ;
 unsigned char value_1 = 6;
 unsigned char Reg_Fail_Flag = RESET;
 unsigned char RF_Communi_Fail = RESET;
-unsigned char U1_71_Buffer[128] = {0};
 extern unsigned char Key_Reg_RQST_Flag;
 //Flag
 unsigned char RF_Key_Detec_CNT_Flag = RESET;
@@ -43,8 +44,22 @@ extern unsigned char Time_Out_Flag_CNT;
 ///////////////////////////////////////////////////////////////////////////////////
 void RF_Key_Packet_handler(void)
 {
+    int tmp=0;
+    
     if(U1_Rx_Count >= RF_KEY_PACKET_SIZE)
     {
+#if 1
+        #ifdef Consol_LOG 
+        printf ("\r\n");
+        printf ("[RF -> CAM]  : ") ;            
+        //printf ("Total Input Data Length : %d \r\n ",U1_Rx_Count) ;      
+        for (tmp=U1_Rx_DataPosition ; tmp<U1_Rx_DataPosition+17 ; tmp++)
+        {
+          printf ("%x, ",U1_Rx_Buffer[tmp]) ;
+        }
+        printf ("\r\n");
+        #endif
+#endif              
         switch (U1_Rx_Buffer[U1_Rx_DataPosition])
         {
         case RF_KEY_CHECK:
@@ -179,7 +194,7 @@ void RF_Data_Confirm(unsigned char CNT)  // 인식된 키 데이터 확인 함수
                   
                 for(unsigned char j = value_1 ; j <= (value_1 + 15) ;j++)
                 {
-                      if(U2_Rx_Buffer[j] == U1_71_Buffer[j-6])          { RF_Data_Check ++;  }
+                      if(U2_Rx_Buffer[j] == RF_Key_Data[j-6])          { RF_Data_Check ++;  }
                 }
                     
                  
@@ -230,7 +245,7 @@ void RF_Data_Save(unsigned char CNT, unsigned char *U1_Rx)      // 스마트키 데이
                 if(j == 51)             j = 52;
                 if(j == 68)             j = 69;
                   
-                U1_71_Buffer[i] = U1_Rx[j];
+                RF_Key_Data[i] = U1_Rx[j];
         }
 }
 

@@ -8,11 +8,10 @@
 /* Private define ------------------------------------------------------------*/
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 
-    PUTCHAR_PROTOTYPE
+PUTCHAR_PROTOTYPE
 {
   USART_SendData(USART1, (uint8_t) ch);
-  while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-  {}
+  while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)    {}
   return ch;
 }
 
@@ -22,20 +21,15 @@ unsigned char U1_Rx_Count = 0;
 unsigned char U1_Rx_DataSavePosition = 0;
 unsigned char U1_Rx_DataPosition = 0;
 unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] = {0};
-
 /*************************** USART 2 ******************************/
 unsigned char Rx_Count = 0 ;
 unsigned char Rx_Compli_Flag = RESET;
 unsigned char U2_Rx_Buffer[128] = {0};
-extern unsigned char U2_Tx_Buffer[128] ;
-
+unsigned char U2_Tx_Buffer[128] = {0} ;  
 /*************************** TIMER ********************************/
 unsigned int    SystemTime_Tick=0;
-
-
-
-/*************************** TIMMER 14 ******************************/
 unsigned char Timer14_CNT = 0;
+
 
 
 //Need to Check
@@ -44,14 +38,18 @@ unsigned int Key_Reg_Timeout_CNT = 0;
 unsigned int RF_Detec_Timeout_CNT = 0;
 unsigned char Usaul_RF_Detec_Erase_Flag = RESET;
 unsigned char RF_Detec_Timeout_Flag = RESET;
-
-
-
-
 unsigned char Reg_key_Value_Receive_Flag = RESET;
 unsigned char Usual_RF_Detec_Flag = RESET;
-
 extern unsigned char Key_Reg_End_Button_Flag ;
+extern unsigned char RF_Key_Detec_CNT_Flag ;
+extern unsigned char Time_Out_Flag;
+volatile unsigned char Time_Out_Flag_CNT = 0;
+unsigned int Watch_Dog_Flag_CNT = 0;
+extern unsigned char g_WatchdogEvent ;
+unsigned char CNT = 0;
+unsigned char Watch_Dog_Flag = SET ;
+
+
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private functions ---------------------------------------------------------*/
@@ -110,21 +108,6 @@ void SysTick_Handler(void)
   TimingDelay_Decrement();
 }
 
-
-
-//unsigned char Timer14_Delay_CNT = 0;
-//extern unsigned char Response_Delay_Flag ;
-//flag
-extern unsigned char RF_Key_Detec_CNT_Flag ;
-//Timer
-extern unsigned char Time_Out_Flag;
-volatile unsigned char Time_Out_Flag_CNT = 0;
-
-unsigned int Watch_Dog_Flag_CNT = 0;
-extern unsigned char g_WatchdogEvent ;
-unsigned char CNT = 0;
-unsigned char Watch_Dog_Flag = SET ;
-
 void TIM14_IRQHandler(void) //10ms
 {
     SystemTime_Tick++;
@@ -171,9 +154,17 @@ void TIM14_IRQHandler(void) //10ms
         
         if(Watch_Dog_Flag_CNT == 300)     // 3초, 
         {
-          
             RF_Key_Detec_CNT_Flag = SET;
             Time_Out_Flag_CNT = 0;
+            
+             #ifdef Consol_LOG 
+             printf ("\r\n[System                ] Watch_Dog Occured\r\n");     
+             #endif           
+             
+             ////////////////////////////// have to erase //////////////////////////////
+                  g_WatchdogEvent = RESET;
+                  Watch_Dog_Flag = RESET;             
+             /////////////////////////////////////////////////////////////////////////////
         }
         
         if(Watch_Dog_Flag_CNT == 2000) // 20 초  중간에 통신 끊어 질때 대비 
@@ -219,9 +210,6 @@ void USART2_IRQHandler(void)     // 월패트 통신 인터럽트
         } // end of TX if
     
 } 
-
-
-
 
 
 void USART1_IRQHandler(void)     

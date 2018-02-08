@@ -36,7 +36,7 @@ unsigned char Temp_buffer[17] ={0};
 
 unsigned char Data_Check = 0;
 
-extern unsigned char Rx_Count ;
+extern unsigned char U2_Rx_Count ;
 
 
 unsigned char TX_CMD = 0x00 ;
@@ -82,7 +82,7 @@ extern unsigned char RF_Key_Detec_CNT_Flag ;
 unsigned char Time_Out_Flag = RESET;
 
 unsigned char Status_Value_Clear_Flag = RESET;
-extern unsigned char U1_71_Buffer[128];
+extern unsigned char RF_Key_Data[128];
 unsigned char U1_Tx_Flag =  RESET;
 unsigned char Device_Info_Flag = RESET;
 
@@ -163,7 +163,7 @@ void Passing(void)
           {
                 Data_Check = 0;
               
-                Rx_Count =0;
+                U2_Rx_Count =0;
                 Rx_Compli_Flag = RESET ;
 
                 for(unsigned char i = 0; i<92 ; i++ )
@@ -269,7 +269,7 @@ void Response(void)
        
                   for(unsigned char i = 6 ; i < ( Tx_LENGTH - 1 ) ; i ++ ) 
                   {                                                                 // 패킷 길이 23 체크섭 전까지 버퍼  [23-1] = [22] ( 체크섬 자리) (<) 이므로 체크섬 자리바로 앞!
-                      U2_Tx_Buffer[i] = U1_71_Buffer[i-6] ;
+                      U2_Tx_Buffer[i] = RF_Key_Data[i-6] ;
                   }
                   
                   U2_Tx_Buffer[2] = Tx_LENGTH;                            // Tx_LENGTH 변수에만 넣고 버퍼에 넣지 않으면 값이 않들어 감

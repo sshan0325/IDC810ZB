@@ -5,16 +5,19 @@
 #include "usart.h"
 
 /* Private variables ---------------------------------------------------------*/
-unsigned char           Key_Polling_Count=0;
-unsigned char           Key_State=KEY_RELEASED;
-unsigned char           KeyActiveState=KEY_INACTIVE;
-unsigned char           g_WatchdogEvent = RESET;
-static __IO uint32_t    TimingDelay;
+unsigned char                   Key_Polling_Count=0;
+unsigned char                   Key_State=KEY_RELEASED;
+unsigned char                   KeyActiveState=KEY_INACTIVE;
+unsigned char                   g_WatchdogEvent = RESET;
+static __IO uint32_t               TimingDelay;
+extern unsigned char        U2_Tx_Buffer[128];
 
+/*************************** TIMER ********************************/
 extern unsigned char    Reg_Mode_Start_Flag;
 extern unsigned char    Key_Reg_RQST_Flag ;
-extern unsigned char    U2_Tx_Buffer[128];
-unsigned char           Key_Reg_End_Button_Flag = RESET;
+unsigned char                Key_Reg_End_Button_Flag = RESET;
+
+
 
 void BuzzerRun(unsigned char Freq, unsigned char BuzzerCount, unsigned char Ontime, unsigned char Offtime)
 {
@@ -43,7 +46,7 @@ void Key_Polling(void)
     {
       KeyActiveState = KEY_ACTIVE;
       #ifdef Consol_LOG 
-      printf ("\r\n[System                     ] Call Button is Pushed\r\n");           
+      printf ("\r\n[System                ] Call Button is Pushed\r\n");           
       #endif
       
       if( Reg_Mode_Start_Flag == SET)  // 등록 모드 시작시 호출 버튼 누름
@@ -53,7 +56,7 @@ void Key_Polling(void)
              
          BuzzerRun(100, 1,80,10);
          #ifdef Consol_LOG 
-         printf ("\r\n[System                     ] KEY Registration Mode Start\r\n");     
+         printf ("\r\n[System                ] KEY Registration Mode Start Request by call Buttom\r\n");     
          #endif
       }    
       if((Key_Reg_RQST_Flag == SET) && ( Reg_Mode_Start_Flag == RESET ))       // 등록 모드 중 등록 모드  종료시 호출 버튼 누름 
@@ -61,7 +64,7 @@ void Key_Polling(void)
          Key_Reg_End_Button_Flag = SET;
          GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_RESET);
          #ifdef Consol_LOG 
-         printf ("\r\n[System                     ] KEY Registration Mode Stop\r\n");     
+         printf ("\r\n[System                ] KEY Registration Mode Stop Request by call Buttom\r\n");     
          #endif
       }    
 
@@ -70,7 +73,7 @@ void Key_Polling(void)
          U2_Tx_Buffer[5] |= 0x01;
          
          #ifdef Consol_LOG 
-         printf ("\r\n[System                     ] Calling is Requested\r\n");     
+         printf ("\r\n[System                ] Calling is Requested\r\n");     
          #endif
          //Call_Button_Flag = SET;
       }    
@@ -81,7 +84,7 @@ void Key_Polling(void)
     {
        KeyActiveState = KEY_INACTIVE;
        #ifdef Consol_LOG 
-       printf ("\r\n[System                     ] Call Button is Relesed\r\n");     
+       printf ("\r\n[System                ] Call Button is Relesed\r\n");     
        #endif
     }    
 } 

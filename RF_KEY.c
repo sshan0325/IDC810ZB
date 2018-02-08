@@ -16,13 +16,7 @@ extern unsigned char    U1_Rx_DataPosition;
 extern unsigned char U2_Tx_Buffer[128];  
 extern unsigned char U2_Rx_Buffer[128];  
 
-
-
-//Need to Check
-unsigned char RF_Packet_1_4 = 0x00;
-unsigned char RF_Packet_5 = 0x00;
-unsigned char RF_Data_Check = RESET;
-
+/* FLAG -----------------------------------------------------------------*/
 extern unsigned char Reg_key_Value_Receive_Flag ;
 extern unsigned char Usual_RF_Detec_Flag ;
 extern unsigned char RF_Detec_Timeout_Flag ;
@@ -32,8 +26,14 @@ unsigned char RF_Communi_Fail = RESET;
 unsigned char RF_Key_Detec_CNT_Flag = RESET;
 extern unsigned char Time_Out_Flag ;
 extern unsigned char Time_Out_Flag_CNT;
-unsigned char U1_71_Buffer[128] = {0};
 extern unsigned char Key_Reg_RQST_Flag;
+
+//Need to Check
+unsigned char RF_Packet_1_4 = 0x00;
+unsigned char RF_Packet_5 = 0x00;
+unsigned char RF_Data_Check = RESET;
+unsigned char RF_Key_Data[128] = {0};
+
 
 
 /* Private functions ---------------------------------------------------------*/
@@ -41,10 +41,22 @@ extern unsigned char Key_Reg_RQST_Flag;
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /******************** RF 모듈 패킷 수신 처리 함수   *******************/
 /////////////////////////////////////////////////////////////////////////////////////////////////
-void RF_Key_Paket_handler(void)
+void RF_Key_Packet_handler(void)
 {
+    int tmp=0;
+    
     if(U1_Rx_Count >= RF_KEY_PACKET_SIZE)
     {
+#ifdef U1_DATA_MONITOR
+        printf ("\r\n");
+        printf ("[RF -> CAM]  : ") ;            
+        //printf ("Total Input Data Length : %d \r\n ",U1_Rx_Count) ;      
+        for (tmp=U1_Rx_DataPosition ; tmp<U1_Rx_DataPosition+17 ; tmp++)
+        {
+          printf ("%x, ",U1_Rx_Buffer[tmp]) ;
+        }
+        printf ("\r\n");
+#endif              
         switch (U1_Rx_Buffer[U1_Rx_DataPosition])
         {
         case RF_KEY_CHECK:
@@ -179,7 +191,7 @@ void RF_Data_Confirm(unsigned char CNT)  // 인식된 키 데이터 확인 함수
                   
                 for(unsigned char j = value_1 ; j <= (value_1 + 15) ;j++)
                 {
-                      if(U2_Rx_Buffer[j] == U1_71_Buffer[j-6])          { RF_Data_Check ++;  }
+                      if(U2_Rx_Buffer[j] == RF_Key_Data[j-6])          { RF_Data_Check ++;  }
                 }
                     
                  
@@ -230,7 +242,7 @@ void RF_Data_Save(unsigned char CNT, unsigned char *U1_Rx)      // 스마트키 데이
                 if(j == 51)             j = 52;
                 if(j == 68)             j = 69;
                   
-                U1_71_Buffer[i] = U1_Rx[j];
+                RF_Key_Data[i] = U1_Rx[j];
         }
 }
 

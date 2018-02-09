@@ -376,9 +376,9 @@ void CMD(void)
         /************************** 0x32  스마트키 등록 요청 ********************************/          
         case REG_KEY_DATA_RQST:  // 0x32  스마트키 등록 요청
         {
-              #ifdef Consol_LOG        
-              printf ("\r\n[System                ] RF KEY Data is Requested.");     
-              #endif                    
+              //#ifdef Consol_LOG        
+              //printf ("\r\n[System                ] RF KEY Data is Requested.");     
+              //#endif                    
                TX_CMD = REG_KEY_DATA_RSPN ;    
               
                Key_Reg_RQST_Flag = SET;
@@ -487,9 +487,7 @@ void CMD(void)
                 Key_Reg_RQST_Flag = RESET;
                 Reg_Mode_Start_Flag = RESET;
               
-                TIM_SetCompare1(TIM3,40);
-                Delay(80);
-                TIM_SetCompare1(TIM3,0); 
+                BuzzerRun(100, 1,80,10);
 
                GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_RESET);  //  LED OFF
                

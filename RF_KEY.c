@@ -43,14 +43,10 @@ unsigned char RF_Key_Data[128] = {0};
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void RF_Key_Packet_handler(void)
 {
-#ifdef U1_DATA_MONITOR   
-    int tmp=0;
-#endif
-    
     if(U1_Rx_Count >= RF_KEY_PACKET_SIZE)
     {
-#ifdef U1_DATA_MONITOR
-        //printf ("\r\n");
+        #ifdef U1_DATA_MONITOR
+        int tmp=0;
         printf ("         [RF -> CAM] / Position : %d  -  ",U1_Rx_DataPosition) ;            
         for (tmp=U1_Rx_DataPosition ; tmp<U1_Rx_DataPosition+17 ; tmp++)
         {
@@ -61,7 +57,8 @@ void RF_Key_Packet_handler(void)
         {
             printf ("WatchDog may occure, U1_Rx_DataPosition: %d\r\n",U1_Rx_DataPosition) ;
         }
-#endif              
+        #endif              
+        
         switch (U1_Rx_Buffer[U1_Rx_DataPosition])
         {
         case RF_KEY_CHECK:

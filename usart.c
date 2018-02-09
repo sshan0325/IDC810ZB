@@ -6,15 +6,15 @@
 
 /* Private variables ---------------------------------------------------------*/
 USART_InitTypeDef                   USART_InitStructure;
-extern unsigned char Tx_LENGTH;
-extern unsigned char        U2_Tx_Buffer[128];
-extern unsigned char g_WatchdogEvent;
-extern unsigned int Watch_Dog_Flag_CNT;
-extern unsigned char U1_Tx_Buffer[128];
-extern unsigned char U2_Rx_Buffer[128];  
-extern unsigned char U1_Paket_Type;
-extern unsigned char Reg_key_Value_Receive_Flag ;
-extern unsigned char RF_DATA_RQST_Flag;
+extern unsigned char  Tx_LENGTH;
+extern unsigned char  U2_Tx_Buffer[128];
+extern unsigned char  g_WatchdogEvent;
+extern unsigned int     Watch_Dog_Flag_CNT;
+extern unsigned char  U1_Tx_Buffer[128];
+extern unsigned char  U2_Rx_Buffer[128];  
+extern unsigned char  U1_Paket_Type;
+extern unsigned char  Reg_key_Value_Receive_Flag ;
+extern unsigned char  RF_DATA_RQST_Flag;
 
 void USART_Configuration(void)
 {

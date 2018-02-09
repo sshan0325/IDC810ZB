@@ -16,8 +16,8 @@ extern unsigned char U2_Tx_Buffer[128];
 extern unsigned char U2_Rx_Buffer[128];  
 
 /* FLAG -----------------------------------------------------------------*/
-extern unsigned char Reg_key_Value_Receive_Flag ;
-extern unsigned char Usual_RF_Detec_Flag ;
+unsigned char Reg_key_Value_Receive_Flag = RESET;
+unsigned char Usual_RF_Detec_Flag = RESET;
 extern unsigned char RF_Detec_Timeout_Flag ;
 unsigned char value_1 = 6;
 unsigned char Reg_Fail_Flag = RESET;

@@ -23,7 +23,7 @@ unsigned char U1_Rx_DataPosition = 0;
 unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] = {0};
 /*************************** USART 2 ******************************/
 unsigned char U2_Rx_Count = 0 ;
-unsigned char Rx_Compli_Flag = RESET;
+unsigned char U2_Rx_Compli_Flag = RESET;
 unsigned char U2_Rx_Buffer[128] = {0};
 extern unsigned char U2_Tx_Buffer[128] ;
 
@@ -31,12 +31,12 @@ extern unsigned char U2_Tx_Buffer[128] ;
 unsigned int    SystemTime_Tick=0;
 unsigned char Timer14_CNT = 0;
 
+
+
 /*************************** FLAG *********************************/
 unsigned int Watch_Dog_Flag_CNT = 0;
 unsigned char Usaul_RF_Detec_Erase_Flag = RESET;
 unsigned char RF_Detec_Timeout_Flag = RESET;
-unsigned char Reg_key_Value_Receive_Flag = RESET;
-unsigned char Usual_RF_Detec_Flag = RESET;
 extern unsigned char Key_Reg_End_Button_Flag ;
 extern unsigned char Time_Out_Flag;
 extern unsigned char RF_Key_Detec_CNT_Flag ;
@@ -191,7 +191,7 @@ void USART2_IRQHandler(void)     // 월패트 통신 인터럽트
                 if(  (U2_Rx_Count == 2) && (U2_Rx_Buffer[1] != RF_Camera_ID) )   { U2_Rx_Count = 0; }
                 if( U2_Rx_Buffer[2] == U2_Rx_Count ) 
                 {
-                      Rx_Compli_Flag = SET ; 
+                      U2_Rx_Compli_Flag = SET ; 
                       U2_Rx_Count = 0;
                 }
         } // end of RX if

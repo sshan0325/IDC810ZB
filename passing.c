@@ -6,15 +6,10 @@
 
 /* Private variables ---------------------------------------------------------*/
 //Seungshin Using
-/* UART  Ch1-------------------------------------------------------------*/
-extern unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] ;
-
-
-
 ////////////////// UART CH 1 ////////////////////
+extern unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] ;
 extern unsigned char    U1_Rx_DataPosition;
 extern unsigned char    U1_Rx_Count ;
-
 ////////////////// UART CH 2 ////////////////////
 extern unsigned char    U2_Rx_Buffer[128]; 
 unsigned char               U2_Tx_Buffer[128] = {0} ;  
@@ -24,39 +19,21 @@ unsigned char               U2_Tx_Buffer[128] = {0} ;
 unsigned char Key_Reg_RQST_Flag = RESET;
 
 
-
-
 //Have to Check
 unsigned char Call_Button_Flag ;
+
 //Need to Check
-
-extern unsigned char Rx_Compli_Flag ;
+extern unsigned char U2_Rx_Compli_Flag ;
 unsigned char Temp_buffer[17] ={0};
-
-
-unsigned char Data_Check = 0;
-
 extern unsigned char U2_Rx_Count ;
-
-
 unsigned char TX_CMD = 0x00 ;
-
-
-extern unsigned char U1_Rx_Flag ;
-
-unsigned char Cognition_Disable_Flag = RESET;
-
 unsigned char RF_Data_Confirm_Flag = RESET;
 unsigned char Key_Reg_End_Flag = RESET;
 unsigned char RF_DATA_RQST_Flag = RESET;
 unsigned char Reg_Mode_Start_Flag = RESET;
-
 extern unsigned char Key_Reg_End_Button_Flag ;
 extern unsigned char RF_Key_CNT;
-
-
 unsigned char Tx_LENGTH = 22;
-
 unsigned char CMD_Buffer[8] = { RF_STATUS_RQST , RF_STATUS_CLR_RQST , RF_DATA_RQST , RF_DATA_CONFIRM_RQST ,
                                                 REG_MODE_START_RQST , REG_KEY_DATA_RQST , REG_MODE_END_RQST , EQUIP_INFOR_RQST};
 unsigned char Rx_LENGTH = 0x00;
@@ -66,37 +43,20 @@ extern unsigned char Usual_RF_Detec_Flag;
 unsigned char U1_Tx_Buffer[128]= {0};
 unsigned char Key_Reg_Timeout_flag = RESET;
 extern unsigned int Key_Reg_Timeout_CNT ;
-
-
 extern unsigned char Reg_Fail_Flag;
 extern unsigned char RF_Communi_Fail ;
-unsigned char Reg_Fail_Bit_Clear_Flag = RESET;
-
 unsigned char Key_Reg_U1_Send_Flag = RESET;
-
 unsigned char Reg_Compli_Flag = RESET;
 unsigned char Key_Save_Flag = RESET;
-
 unsigned char U1_Paket_Type = 0x00;
 extern unsigned char RF_Key_Detec_CNT_Flag ;
 unsigned char Time_Out_Flag = RESET;
-
 unsigned char Status_Value_Clear_Flag = RESET;
 extern unsigned char RF_Key_Data[128];
 unsigned char U1_Tx_Flag =  RESET;
 unsigned char Device_Info_Flag = RESET;
-
-extern unsigned char g_WatchdogEvent;
-
 unsigned char Watch_Dog_init_Flag = SET;
-extern unsigned int Watch_Dog_Flag_CNT;
 extern unsigned char CNT ;
-extern unsigned char Time_Out_Flag_CNT;
-
-
-
-
-
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private functions ---------------------------------------------------------*/
@@ -109,7 +69,7 @@ extern unsigned char Time_Out_Flag_CNT;
 //////////////////////////////////////////////////////////////////////////////
 void Packet_handler(void)       
 {
-          if(Rx_Compli_Flag == SET)
+          if(U2_Rx_Compli_Flag == SET)
           {
                 Rx_LENGTH = U2_Rx_Buffer[2];
 
@@ -161,7 +121,7 @@ unsigned char PacketValidation(void)
     if(Result != VALID )
     {
           U2_Rx_Count =0;
-          Rx_Compli_Flag = RESET ;
+          U2_Rx_Compli_Flag = RESET ;
           for(unsigned char i = 0; i<92 ; i++ )
           {
               U2_Rx_Buffer[i] = 0;
@@ -254,7 +214,7 @@ void Response(void)
    }
 
    U1_Tx_Flag= RESET;
-   Rx_Compli_Flag = RESET;
+   U2_Rx_Compli_Flag = RESET;
    CNT = 0;
 }
 

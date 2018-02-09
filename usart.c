@@ -1,7 +1,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
 #include "stm32f0xx.h"
-
+#include "platform_config.h"
 
 
 /* Private variables ---------------------------------------------------------*/
@@ -13,6 +13,8 @@ extern unsigned int Watch_Dog_Flag_CNT;
 extern unsigned char U1_Tx_Buffer[128];
 extern unsigned char U2_Rx_Buffer[128];  
 extern unsigned char U1_Paket_Type;
+extern unsigned char Reg_key_Value_Receive_Flag ;
+extern unsigned char RF_DATA_RQST_Flag;
 
 void USART_Configuration(void)
 {

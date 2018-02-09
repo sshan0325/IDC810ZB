@@ -40,27 +40,20 @@ void GPIO_Config(void);
 void NVIC_Config(void);
 void RCC_Configuration(void);
 void EXTI4_15_Config(void);
-
 void Packet_handler(void); 
 void RF_Key_Packet_handler(void);
-
 void Delay(__IO uint32_t nTime);
 void TimingDelay_Decrement(void);
-
-
 void CMD(void);
 void Clear_Tx_Buffer(void);
 void RF_Data_Confirm(unsigned char CNT);
-
 void RF_Data_Save(unsigned char CNT, unsigned char *U1_Rx);
 unsigned char CMD_Check(unsigned char *CMD, unsigned char CNT);
 unsigned char Key_Info_Compare(void);
 void Data_Save_71(unsigned char RF_CNT, unsigned char *U1_71);
-
 void WatchDog_Init(void);
 void WatchDog_Reset(void);
 void WatchDogTask(void);
-
 void Response(void);
 void SysInit(void);
 /***************************************************************END OF FILE****/

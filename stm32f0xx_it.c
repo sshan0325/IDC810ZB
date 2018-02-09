@@ -113,8 +113,7 @@ void SysTick_Handler(void)
 void TIM14_IRQHandler(void) //10ms
 {
     SystemTime_Tick++;
-    
- 
+
     if (TIM_GetITStatus(TIM14, TIM_IT_Update) != RESET)
     {
         TIM_ClearITPendingBit(TIM14, TIM_IT_Update);
@@ -127,14 +126,6 @@ void TIM14_IRQHandler(void) //10ms
         if(Key_Reg_Timeout_flag)             Key_Reg_Timeout_CNT ++;
         
 
-        if(RF_Detec_Timeout_CNT == 3000)  // 30 초, 키 인식후 데이터 삭제
-        {
-              RF_Detec_Timeout_CNT = 0;
-              Usaul_RF_Detec_Erase_Flag = SET;
-              
-              RF_Detec_Timeout_Flag = RESET;
-        }
-        
         if(Time_Out_Flag_CNT == 5)  // 50ms, RF 모듈이 응답해야 하는 최소 시간
         {
               Time_Out_Flag = RESET;
@@ -156,6 +147,7 @@ void TIM14_IRQHandler(void) //10ms
         {
             RF_Key_Detec_CNT_Flag = SET;
             Time_Out_Flag_CNT = 0;
+            
              #ifdef Consol_LOG 
              int tmp=0;
              printf ("\r\n[System                ] Watch_Dog Occured / DataPosition : %d  -  \r\n",U1_Rx_DataPosition);     

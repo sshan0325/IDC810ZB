@@ -26,7 +26,6 @@ unsigned char RF_Key_Detec_CNT_Flag = RESET;
 extern unsigned char Time_Out_Flag ;
 extern unsigned char Time_Out_Flag_CNT;
 extern unsigned char Key_Reg_RQST_Flag;
-extern unsigned char Usaul_RF_Detec_Erase_Flag;
 extern unsigned char RF_DATA_RQST_Flag;
 
 //Need to Check
@@ -135,7 +134,7 @@ void RF_Key_Packet_handler(void)
                 if ((RF_Key_CNT * RF_KEY_PACKET_SIZE) <= U1_Rx_Count)
                 {
                     #ifdef Consol_LOG                      
-                    printf ("\r\n[RF Key Comm           ] RF_KEY Recognition Done(Key Count : %d)\r\n",RF_Key_CNT); 
+                    printf ("\r\n[RF Key Comm           ] RF_KEY Recognition Done(Key Count : %d)",RF_Key_CNT); 
                     #endif                      
                     
                     RF_Key_Detec_CNT_Flag = SET;
@@ -252,34 +251,3 @@ void Clear_Tx_Buffer(void)  // 전송 데이터 초기화 함수
                 U2_Tx_Buffer[i] = 0x00;
         }
 } 
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-/******************** 타임 아웃시 RF 모듈 패킷 삭제 함수 *******************/
-////////////////////////////////////////////////////////////////////////////////////////////////
-void RF_Packet_Erase_handler(void)     
-{
-  
-      if(Usaul_RF_Detec_Erase_Flag == SET)
-      {
-            Usaul_RF_Detec_Erase_Flag = RESET;
-            
-            for(unsigned char i = 0 ; i < (RF_Key_CNT * 17) ; i ++)             // RF 패킷 초기화 
-            {
-              U1_Rx_Buffer[i] = 0;
-            }
-            
-            RF_Key_CNT = 0;                                     // RF 관련 카운트 및 플래그 초기화
-            U1_Rx_Count = 0;
-            
-            U2_Tx_Buffer[5] = 0x00;
-                  
-            Tx_LENGTH = 7;
-            RF_DATA_RQST_Flag = RESET;
-            Usual_RF_Detec_Flag = RESET;
-
-            #ifdef Consol_LOG                      
-            printf ("\r\n[System                ] RF_Packet_Erase_handler is operated.\r\n");     
-            #endif                  
-      }
-}
-////////////////////////////////////////////////////////////////////////////////////////////////

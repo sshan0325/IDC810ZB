@@ -309,6 +309,9 @@ void CMD(void)
         /***************** 0x21 RF 데이터 요청  ****************/      
         case RF_DATA_RQST:      // 0x21 RF 데이터 요청 
         {
+              #ifdef Consol_LOG        
+              printf ("\r\n[System                ] RF Data is Requested.");     
+              #endif                    
               RF_Key_CNT = U2_Rx_Buffer[5];  // 요청한 데이터 패킷 갯수만 보내기 위함 
               
               TX_CMD = RF_DATA_RSPN; //  평상시 스마트 키 인식시 
@@ -330,6 +333,10 @@ void CMD(void)
         /***************** 0x22  스마트키 데이터 확인  ****************/      
         case RF_DATA_CONFIRM_RQST:  // 0x22  스마트키 데이터 확인
         {
+              #ifdef Consol_LOG        
+              printf ("\r\n[System                ] RF Data Confirm is Requested.");     
+              #endif                    
+          
                 U1_Rx_Count = 0;
                 KEY_Number_to_Confirm = U2_Rx_Buffer[5];                   // 요청 갯수 저장
                 RF_Data_Confirm(KEY_Number_to_Confirm);                 // 전송 데이터 확인 함수
@@ -345,6 +352,9 @@ void CMD(void)
         /***************** 0x31  스마트키 등록 모드 시작  ****************/  
         case REG_MODE_START_RQST:  // 0x31  스마트키 등록 모드 시작
         {
+                #ifdef Consol_LOG 
+                printf ("\r\n[System                ] Regist mode Start Request");     
+                #endif          
                 TX_CMD = REG_MODE_START_RSPN ;    
                 Key_Reg_RQST_Flag = SET;
                 Tx_LENGTH = 7;
@@ -366,7 +376,10 @@ void CMD(void)
         /************************** 0x32  스마트키 등록 요청 ********************************/          
         case REG_KEY_DATA_RQST:  // 0x32  스마트키 등록 요청
         {
-              TX_CMD = REG_KEY_DATA_RSPN ;    
+              #ifdef Consol_LOG        
+              printf ("\r\n[System                ] RF KEY Data is Requested.");     
+              #endif                    
+               TX_CMD = REG_KEY_DATA_RSPN ;    
               
                Key_Reg_RQST_Flag = SET;
                Reg_Mode_Start_Flag = RESET;
@@ -462,6 +475,9 @@ void CMD(void)
         /*************************** 0x33  스마트키 등록 모드 종료  ********************************/
         case REG_MODE_END_RQST:  // 0x33  스마트키 등록 모드 종료 
         {
+              #ifdef Consol_LOG        
+              printf ("\r\n[System                ] RF Status clear is Requested.");     
+              #endif                    
                TX_CMD = REG_MODE_END_RSPN ;    
                Tx_LENGTH = 7;
                U2_Tx_Buffer[5] = 0x01;
@@ -490,6 +506,9 @@ void CMD(void)
          /*************************** 0x01 기기 정보 요청 ********************************/
         case EQUIP_INFOR_RQST:              // 0x01 기기 정보 요청
         {
+              #ifdef Consol_LOG        
+              printf ("\r\n[System                ] Device Information Request.");     
+              #endif
               TX_CMD = EQUIP_INFOR_RSPN ; 
               Tx_LENGTH = 15;
               Device_Info_Flag = SET;

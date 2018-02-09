@@ -148,11 +148,15 @@ unsigned char PacketValidation(void)
 {
     unsigned char Result=0;
     
-    if( CMD_Check( U2_Rx_Buffer, sizeof(CMD_Buffer)/sizeof(unsigned char)))    
+    if( CMD_Check( U2_Rx_Buffer, sizeof(CMD_Buffer)/sizeof(unsigned char)))   
+    {
         Result ++; 
+    }
      
     if( U2_Rx_Buffer[(Rx_LENGTH-1)] == Check_Checksum())        
+    {
         Result ++; 
+    }
 
     if(Result != VALID )
     {
@@ -162,9 +166,8 @@ unsigned char PacketValidation(void)
           {
               U2_Rx_Buffer[i] = 0;
               U2_Tx_Buffer[i] = 0;
-           }
+          }
      }
-
     return Result;
  }
 
@@ -242,110 +245,65 @@ unsigned char Make_Checksum(void)                       //
 ///////////////////////////////////////////////////////////////////////////////////////
 void Response(void)                                                          
 {
-  int tmp=0;
-      GPIO_WriteBit(GPIOB,  GPIO_Pin_0 , (BitAction) Bit_SET);  // 485 Trans pin Enable 
-          
-                U2_Tx_Buffer[0] = STX ;
-                U2_Tx_Buffer[1] = RF_Camera_ID ;
-                U2_Tx_Buffer[2] = Tx_LENGTH ;
-                U2_Tx_Buffer[3] = TX_CMD;
-                U2_Tx_Buffer[4] = U2_Rx_Buffer[4] ;
-            
-                U2_Tx_Buffer[Tx_LENGTH-1] = Make_Checksum() ;
-          
-          
+    GPIO_WriteBit(GPIOB,  GPIO_Pin_0 , (BitAction) Bit_SET);  // 485 Trans pin Enable 
+
+    U2_Tx_Buffer[0] = STX ;
+    U2_Tx_Buffer[1] = RF_Camera_ID ;
+    U2_Tx_Buffer[2] = Tx_LENGTH ;
+    U2_Tx_Buffer[3] = TX_CMD;
+    U2_Tx_Buffer[4] = U2_Rx_Buffer[4] ;
+    U2_Tx_Buffer[Tx_LENGTH-1] = Make_Checksum() ;
+
     /************* 평상시 RF 데이터 인식 시 응답패킷 저장 루틴 **************/
-          if((RF_DATA_RQST_Flag == SET))
-          {
-            
-                Tx_LENGTH = ( 16 * RF_Key_CNT ) + 7 ;
-                
-       
-                  for(unsigned char i = 6 ; i < ( Tx_LENGTH - 1 ) ; i ++ ) 
-                  {                                                                 // 패킷 길이 23 체크섭 전까지 버퍼  [23-1] = [22] ( 체크섬 자리) (<) 이므로 체크섬 자리바로 앞!
-                      U2_Tx_Buffer[i] = RF_Key_Data[i-6] ;
-                  }
-                  
-                  U2_Tx_Buffer[2] = Tx_LENGTH;                            // Tx_LENGTH 변수에만 넣고 버퍼에 넣지 않으면 값이 않들어 감
-                  
-                  U2_Tx_Buffer[Tx_LENGTH-1] = Make_Checksum();
-             
+    if((RF_DATA_RQST_Flag == SET))
+    {
+          Tx_LENGTH = ( 16 * RF_Key_CNT ) + 7 ;
+           for(unsigned char i = 6 ; i < ( Tx_LENGTH - 1 ) ; i ++ ) 
+           {                                                                 // 패킷 길이 23 체크섭 전까지 버퍼  [23-1] = [22] ( 체크섬 자리) (<) 이므로 체크섬 자리바로 앞!
+               U2_Tx_Buffer[i] = RF_Key_Data[i-6] ;
+           }
+           U2_Tx_Buffer[2] = Tx_LENGTH;                            // Tx_LENGTH 변수에만 넣고 버퍼에 넣지 않으면 값이 않들어 감
+           U2_Tx_Buffer[Tx_LENGTH-1] = Make_Checksum();
 
-                RF_DATA_RQST_Flag = RESET; // 15.05.20 전광식.
-             
-                RF_Key_CNT = 0;
-
-                Reg_key_Value_Receive_Flag = RESET;
-          }
-          
+           RF_DATA_RQST_Flag = RESET; // 15.05.20 전광식.
+           RF_Key_CNT = 0;
+           Reg_key_Value_Receive_Flag = RESET;
+    }
           
     /*************  스마트키 등록시 응답패킷 저장 루틴  **************/          
            if((Reg_key_Value_Receive_Flag == SET))
           {
                 Tx_LENGTH = ( 16 * RF_Key_CNT ) + 7 ;
-              
-
                 for(unsigned char i = 6 ; i < ( Tx_LENGTH - 1 ) ; i ++ )    // 22
                 {                                                                              // 패킷 길이 23 체크섭 전까지 버퍼  [23-1] = [22] ( 체크섬 자리) (<) 이므로 체크섬 자리바로 앞!
                     U2_Tx_Buffer[i] = U1_Rx_Buffer[U1_Rx_DataPosition-RF_KEY_PACKET_SIZE+i-5] ;                            //16까지 저장,  UART 1에서 들어오는 데이터 필드 [0] 은 버리고 전송
                 }
-
                 U2_Tx_Buffer[2] = Tx_LENGTH;                                         // Tx_LENGTH 변수에만 넣고 버퍼에 넣지 않으면 값이 않들어 감
-                
                 U2_Tx_Buffer[Tx_LENGTH-1] = Make_Checksum();
 
-                        
-             
                 RF_Key_CNT = 0;
-                       
                 Reg_key_Value_Receive_Flag = RESET;
-                
-#if 1                  
-                #ifdef Consol_LOG 
-                printf ("\r\n");
-                printf ("RF Key CNT : %d \r\n ",RF_Key_CNT) ;
-                printf ("Tx Length : %d \r\n ",Tx_LENGTH) ;
-                
-                for (tmp=U1_Rx_DataPosition-RF_KEY_PACKET_SIZE ; tmp<U1_Rx_DataPosition-RF_KEY_PACKET_SIZE+17 ; tmp++)
-                {
-                  printf ("%x, ",U1_Rx_Buffer[tmp]) ;
-                }
-                printf ("\r\n");                  
-                for (tmp=0 ; tmp<Tx_LENGTH ; tmp++)
-                {
-                  printf ("%x, ",U2_Tx_Buffer[tmp]) ;
-                }
-                #endif
-#endif                       
           }
-  
-          
-          
+
           USART2_TX();
           
           
           
-      /*************  응답 패킷 송신 후  예외 처리  루틴  **************/     
-          if(Reg_Fail_Flag == SET)                 // 등록모드에서  이미 등록된 키일 경우 시 플래그 데이터 비트 재설정
-          {
-                Reg_Fail_Flag = RESET;
-            
-                U2_Tx_Buffer[5] &= 0xFB;
-           }
-    
-           if( RF_Communi_Fail == SET)          // 등록 모드에서  통신 실패 시 플래그 데이터 비트 재설정
-           {
-                RF_Communi_Fail = RESET;
-              
-                 U2_Tx_Buffer[5] &= 0xF7;
-           }
-          
-          
-          
-          
-          U1_Tx_Flag= RESET;
-          Rx_Compli_Flag = RESET;
-          CNT = 0;
+         /*************  응답 패킷 송신 후  예외 처리  루틴  **************/     
+         if(Reg_Fail_Flag == SET)                 // 등록모드에서  이미 등록된 키일 경우 시 플래그 데이터 비트 재설정
+        {
+              Reg_Fail_Flag = RESET;
+              U2_Tx_Buffer[5] &= 0xFB;
+         }
+         if( RF_Communi_Fail == SET)          // 등록 모드에서  통신 실패 시 플래그 데이터 비트 재설정
+         {
+              RF_Communi_Fail = RESET;
+              U2_Tx_Buffer[5] &= 0xF7;
+         }
+
+         U1_Tx_Flag= RESET;
+         Rx_Compli_Flag = RESET;
+         CNT = 0;
 }
 
 
@@ -358,6 +316,16 @@ void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수
       {
            USART_SendData(USART2,U2_Tx_Buffer[i]);  
            while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET); // wait for trans
+           
+           #ifdef Consol_LOG 
+           if (i==5 && Reg_key_Value_Receive_Flag != SET && RF_DATA_RQST_Flag != SET && U2_Tx_Buffer[i]!=0)
+           {
+              if ( (U2_Tx_Buffer[i]&0x80) == 0x80 )
+                printf ("\r\n[System                ] RF Communication Error\r\n");     
+              if ( (U2_Tx_Buffer[i]&0x01) == 0x01 )
+                printf ("\r\n[System                ] call Button is Pushed and shared to WallPAD\r\n");     
+           }
+           #endif                
       }
 
         g_WatchdogEvent = SET;   // 통신시에 계속 이벤트 셋팅 
@@ -372,11 +340,12 @@ void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수
 ////////////////////////////////////////////////////////////////////////////////////
 /******************** 각 명령어별 동작  함수  *******************/
 ///////////////////////////////////////////////////////////////////////////////////
-
+    int tobeerased=0;
 void CMD(void)
 {
     unsigned char Requested_CMD;
     Requested_CMD = U2_Rx_Buffer[3];
+
       
     switch(Requested_CMD)
     {
@@ -457,7 +426,6 @@ void CMD(void)
         /***************** 0x21 RF 데이터 요청  ****************/      
         case RF_DATA_RQST:      // 0x21 RF 데이터 요청 
         {
-          
               RF_Key_CNT = U2_Rx_Buffer[5];  // 요청한 데이터 패킷 갯수만 보내기 위함 
               
               TX_CMD = RF_DATA_RSPN; //  평상시 스마트 키 인식시 
@@ -479,27 +447,15 @@ void CMD(void)
         /***************** 0x22  스마트키 데이터 확인  ****************/      
         case RF_DATA_CONFIRM_RQST:  // 0x22  스마트키 데이터 확인
         {
-          
                 U1_Rx_Count = 0;
                 KEY_Number_to_Confirm = U2_Rx_Buffer[5];                   // 요청 갯수 저장
-                
-            
-                  
                 RF_Data_Confirm(KEY_Number_to_Confirm);                 // 전송 데이터 확인 함수
-                  
                 TX_CMD = RF_DATA_CONFIRM_RSPN ;                       
-             
-            
                 U2_Tx_Buffer[5] = KEY_Number_to_Confirm;
                 Tx_LENGTH = 9;
-                  
-                 RF_DATA_RQST_Flag = RESET;  
-                 
-                 RF_Data_Confirm_Flag = SET;
-                 
-                 Usual_RF_Detec_Flag = RESET;
-                 
-           
+                RF_DATA_RQST_Flag = RESET;  
+                RF_Data_Confirm_Flag = SET;
+                Usual_RF_Detec_Flag = RESET;
          }
          break;
          
@@ -507,7 +463,6 @@ void CMD(void)
         case REG_MODE_START_RQST:  // 0x31  스마트키 등록 모드 시작
         {
                 TX_CMD = REG_MODE_START_RSPN ;    
-               
                 Key_Reg_RQST_Flag = SET;
                 Tx_LENGTH = 7;
                 
@@ -528,7 +483,7 @@ void CMD(void)
         /************************** 0x32  스마트키 등록 요청 ********************************/          
         case REG_KEY_DATA_RQST:  // 0x32  스마트키 등록 요청
         {
-               TX_CMD = REG_KEY_DATA_RSPN ;    
+              TX_CMD = REG_KEY_DATA_RSPN ;    
               
                Key_Reg_RQST_Flag = SET;
                Reg_Mode_Start_Flag = RESET;
@@ -679,7 +634,10 @@ void CMD(void)
 //////////////////////////////////////////////////////////////////////////////////////////
 void USART1_TX(void)
 {
-
+#ifdef U1_DATA_MONITOR  
+    int tmp=0;
+#endif
+    
         U1_Tx_Buffer[0] = U1_Paket_Type;
         U1_Tx_Buffer[6] = U2_Rx_Buffer[5];
         U1_Tx_Buffer[7] = U2_Rx_Buffer[6];
@@ -704,6 +662,16 @@ void USART1_TX(void)
 
 
 
+#ifdef U1_DATA_MONITOR
+        #ifdef Consol_LOG 
+        printf ("[CAM -> RF / Position : %d  -  ]",U1_Rx_DataPosition) ;      
+        for (tmp=0 ; tmp<17 ; tmp++)
+        {
+          printf ("%x  ",U1_Tx_Buffer[tmp]) ;
+        }
+        printf ("\r\n");
+        #endif
+#endif  
 }
        
                   

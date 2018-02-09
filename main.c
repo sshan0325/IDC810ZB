@@ -48,6 +48,10 @@ void RF_Packet_Erase_handler(void)
             Tx_LENGTH = 7;
             RF_DATA_RQST_Flag = RESET;
             Usual_RF_Detec_Flag = RESET;
+
+            #ifdef Consol_LOG                      
+            printf ("\r\n[System                ] RF_Packet_Erase_handler is operated.\r\n");     
+            #endif                  
       }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////

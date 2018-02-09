@@ -43,19 +43,24 @@ unsigned char RF_Key_Data[128] = {0};
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void RF_Key_Packet_handler(void)
 {
+#ifdef U1_DATA_MONITOR   
     int tmp=0;
+#endif
     
     if(U1_Rx_Count >= RF_KEY_PACKET_SIZE)
     {
 #ifdef U1_DATA_MONITOR
-        printf ("\r\n");
-        printf ("[RF -> CAM]  : ") ;            
-        //printf ("Total Input Data Length : %d \r\n ",U1_Rx_Count) ;      
+        //printf ("\r\n");
+        printf ("         [RF -> CAM] / Position : %d  -  ",U1_Rx_DataPosition) ;            
         for (tmp=U1_Rx_DataPosition ; tmp<U1_Rx_DataPosition+17 ; tmp++)
         {
-          printf ("%x, ",U1_Rx_Buffer[tmp]) ;
+          printf ("%x  ",U1_Rx_Buffer[tmp]) ;
         }
         printf ("\r\n");
+        if (U1_Rx_Buffer[U1_Rx_DataPosition] ==0)
+        {
+            printf ("WatchDog may occure, U1_Rx_DataPosition: %d\r\n",U1_Rx_DataPosition) ;
+        }
 #endif              
         switch (U1_Rx_Buffer[U1_Rx_DataPosition])
         {
@@ -67,13 +72,6 @@ void RF_Key_Packet_handler(void)
                 
                 Time_Out_Flag = RESET;     // RF 모듈 타임 아웃 초기화
                 Time_Out_Flag_CNT = 0;
-                
-                #ifdef Consol_LOG        
-                if (RF_Key_CNT >0)
-                {
-                    printf ("\r\n[RF Key Comm           ] RF_KEY Recognition No. : %d ( %x, %x, %x, %x)\r\n", RF_Key_CNT,U1_Rx_Buffer[U1_Rx_DataPosition],U1_Rx_Buffer[U1_Rx_DataPosition+1],U1_Rx_Buffer[U1_Rx_DataPosition+2],U1_Rx_Buffer[U1_Rx_DataPosition+3]); 
-                }
-                #endif      
                 
                 U1_Rx_Count -= RF_KEY_PACKET_SIZE;
                 U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE);
@@ -136,8 +134,7 @@ void RF_Key_Packet_handler(void)
                 if ((RF_Key_CNT * RF_KEY_PACKET_SIZE) <= U1_Rx_Count)
                 {
                     #ifdef Consol_LOG                      
-                    printf ("\r\n[RF Key Comm           ] RF_KEY Recognition Done\r\n"); 
-                    printf ("\r\n[RF Key Comm           ] RF_KEY Count : %d\r\n",RF_Key_CNT); 
+                    printf ("\r\n[RF Key Comm           ] RF_KEY Recognition Done(Key Count : %d)\r\n",RF_Key_CNT); 
                     #endif                      
                     
                     RF_Key_Detec_CNT_Flag = SET;
@@ -162,11 +159,6 @@ void RF_Key_Packet_handler(void)
         default:
             U1_Rx_Count --;
             U1_Rx_DataPosition ++;              
-            
-            #ifdef Consol_LOG        
-            printf ("\r\n[RF Key Comm           ] RF_KEY Normal mode Packet Error\r\n"); 
-            #endif                  
-            
             break;
         }
              

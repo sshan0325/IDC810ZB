@@ -337,7 +337,7 @@ void CMD(void)
               printf ("\r\n[System                ] RF Data Confirm is Requested.");     
               #endif                    
           
-                U1_Rx_Count = 0;
+                //U1_Rx_Count = 0;
                 KEY_Number_to_Confirm = U2_Rx_Buffer[5];                   // 요청 갯수 저장
                 RF_Data_Confirm(KEY_Number_to_Confirm);                 // 전송 데이터 확인 함수
                 TX_CMD = RF_DATA_CONFIRM_RSPN ;                       
@@ -368,7 +368,7 @@ void CMD(void)
                 RF_DATA_RQST_Flag = RESET;     //  동록 모드 시작  전, 사이에 키인식 되면 키값이 들어오는것 방지
                 Reg_Mode_Start_Flag = SET;
                 
-                U1_Rx_Count = 0;                        // 등록 모드 시작 전, 키 인식 되면  U1_Rx_Count 증가되서 CA나 BA를 못받게 됨
+                //U1_Rx_Count = 0;                        // 등록 모드 시작 전, 키 인식 되면  U1_Rx_Count 증가되서 CA나 BA를 못받게 됨
          }
          break;  
          
@@ -414,7 +414,7 @@ void CMD(void)
                      USART1_TX();
                 }
             
-               U1_Rx_Count = 0 ;  // 등록 키값 전달 전에 평상시 키값 들어오는 것 방지 
+                //U1_Rx_Count = 0 ;  // 등록 키값 전달 전에 평상시 키값 들어오는 것 방지 
 
               if(Reg_key_Value_Receive_Flag == SET)  // 등록 키값 받았을때
               { 

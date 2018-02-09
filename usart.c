@@ -121,6 +121,7 @@ void USART1_TX(void)
         }
 
         #ifdef U1_DATA_MONITOR
+        extern unsigned char    U1_Rx_DataPosition;
         printf ("[CAM -> RF / Position : %d  -  ]",U1_Rx_DataPosition) ;      
         for (tmp=0 ; tmp<17 ; tmp++)
         {

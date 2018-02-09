@@ -138,7 +138,7 @@ void RF_Key_Packet_handler(void)
 
                     if(RF_Key_CNT > 5)                 // 인식 키 개수가 5개 이상일 경우
                     {
-                          U1_Rx_Count = 0;                // 배열 카운트 초기화 안하면 시스템 다운
+                          //U1_Rx_Count = 0;                // 배열 카운트 초기화 안하면 시스템 다운
                           RF_Key_CNT = 5;  
                     }
                     Usual_RF_Detec_Flag = SET;

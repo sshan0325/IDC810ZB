@@ -53,10 +53,6 @@ void RF_Key_Packet_handler(void)
           printf ("%x  ",U1_Rx_Buffer[tmp]) ;
         }
         printf ("\r\n");
-        if (U1_Rx_Buffer[U1_Rx_DataPosition] ==0)
-        {
-            printf ("WatchDog may occure, U1_Rx_DataPosition: %d\r\n",U1_Rx_DataPosition) ;
-        }
         #endif              
         
         switch (U1_Rx_Buffer[U1_Rx_DataPosition])

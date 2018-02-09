@@ -97,9 +97,6 @@ void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수
 //////////////////////////////////////////////////////////////////////////////////////////
 void USART1_TX(void)
 {
-#ifdef U1_DATA_MONITOR  
-    int tmp=0;
-#endif
         U1_Tx_Buffer[0] = U1_Paket_Type;
         U1_Tx_Buffer[6] = U2_Rx_Buffer[5];
         U1_Tx_Buffer[7] = U2_Rx_Buffer[6];
@@ -121,6 +118,7 @@ void USART1_TX(void)
         }
 
         #ifdef U1_DATA_MONITOR
+        int tmp=0;
         extern unsigned char    U1_Rx_DataPosition;
         printf ("[CAM -> RF / Position : %d  -  ]",U1_Rx_DataPosition) ;      
         for (tmp=0 ; tmp<17 ; tmp++)

@@ -112,7 +112,7 @@ void Packet_handler(void)
           if(Rx_Compli_Flag == SET)
           {
                 Rx_LENGTH = U2_Rx_Buffer[2];
-                //Passing();
+
                 if(Watch_Dog_init_Flag)                 //  초기 통신 시작시 1회 왓치독 셋팅 
                 {
                     Watch_Dog_init_Flag = RESET;
@@ -177,67 +177,19 @@ unsigned char PacketValidation(void)
 //////////////////////////////////////////////////////////////////////////
 unsigned char CMD_Check(unsigned char *CMD, unsigned char CNT)    
 {
-  
   char CMD_Check = 0;
-  
   for(char i = 0 ; i < CNT ; i ++)
   {
       if(CMD[3] == CMD_Buffer[i])         CMD_Check++;
   }
-  
-  
       if(CMD_Check)
         return 1;
-  
       else
         return 0;
-      
- 
 }
-
-
-///////////////////////////////////////////////////////////////////////////
-/******************** 체크섬 검사 함수 *******************/
 //////////////////////////////////////////////////////////////////////////
-unsigned char Check_Checksum(void)                      // 
-{
-  
-      unsigned char Checksum = 0x02;
-      
-      for(unsigned char i = 1 ; i< (Rx_LENGTH -1) ; i++)
-      {        
-        Checksum ^= U2_Rx_Buffer[i];
-        Checksum ++;
-        
-      }
-     
-      
-        
-      return Checksum;
-
-  
-}
 
 
-///////////////////////////////////////////////////////////////////////////
-/******************** 체크섬 만드는 함수 *******************/
-//////////////////////////////////////////////////////////////////////////
-unsigned char Make_Checksum(void)                       //  
-{
-  
-      unsigned char Checksum = 0x02;
-      
-      for(unsigned int i = 1 ; i< (Tx_LENGTH - 1) ; i++)
-      {
-         Checksum ^= U2_Tx_Buffer[i];
-         Checksum ++;
-      }
-      
-   
-    
-       return Checksum;
-  
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -271,76 +223,47 @@ void Response(void)
     }
           
     /*************  스마트키 등록시 응답패킷 저장 루틴  **************/          
-           if((Reg_key_Value_Receive_Flag == SET))
-          {
-                Tx_LENGTH = ( 16 * RF_Key_CNT ) + 7 ;
-                for(unsigned char i = 6 ; i < ( Tx_LENGTH - 1 ) ; i ++ )    // 22
-                {                                                                              // 패킷 길이 23 체크섭 전까지 버퍼  [23-1] = [22] ( 체크섬 자리) (<) 이므로 체크섬 자리바로 앞!
-                    U2_Tx_Buffer[i] = U1_Rx_Buffer[U1_Rx_DataPosition-RF_KEY_PACKET_SIZE+i-5] ;                            //16까지 저장,  UART 1에서 들어오는 데이터 필드 [0] 은 버리고 전송
-                }
-                U2_Tx_Buffer[2] = Tx_LENGTH;                                         // Tx_LENGTH 변수에만 넣고 버퍼에 넣지 않으면 값이 않들어 감
-                U2_Tx_Buffer[Tx_LENGTH-1] = Make_Checksum();
+    if((Reg_key_Value_Receive_Flag == SET))
+   {
+        Tx_LENGTH = ( 16 * RF_Key_CNT ) + 7 ;
+        for(unsigned char i = 6 ; i < ( Tx_LENGTH - 1 ) ; i ++ )    // 22
+        {                                                                              // 패킷 길이 23 체크섭 전까지 버퍼  [23-1] = [22] ( 체크섬 자리) (<) 이므로 체크섬 자리바로 앞!
+            U2_Tx_Buffer[i] = U1_Rx_Buffer[U1_Rx_DataPosition-RF_KEY_PACKET_SIZE+i-5] ;                            //16까지 저장,  UART 1에서 들어오는 데이터 필드 [0] 은 버리고 전송
+        }
+        U2_Tx_Buffer[2] = Tx_LENGTH;                                         // Tx_LENGTH 변수에만 넣고 버퍼에 넣지 않으면 값이 않들어 감
+        U2_Tx_Buffer[Tx_LENGTH-1] = Make_Checksum();
 
-                RF_Key_CNT = 0;
-                Reg_key_Value_Receive_Flag = RESET;
-          }
+        RF_Key_CNT = 0;
+        Reg_key_Value_Receive_Flag = RESET;
+   }
 
-          USART2_TX();
+   USART2_TX();
           
           
           
-         /*************  응답 패킷 송신 후  예외 처리  루틴  **************/     
-         if(Reg_Fail_Flag == SET)                 // 등록모드에서  이미 등록된 키일 경우 시 플래그 데이터 비트 재설정
-        {
-              Reg_Fail_Flag = RESET;
-              U2_Tx_Buffer[5] &= 0xFB;
-         }
-         if( RF_Communi_Fail == SET)          // 등록 모드에서  통신 실패 시 플래그 데이터 비트 재설정
-         {
-              RF_Communi_Fail = RESET;
-              U2_Tx_Buffer[5] &= 0xF7;
-         }
+   /*************  응답 패킷 송신 후  예외 처리  루틴  **************/     
+   if(Reg_Fail_Flag == SET)                 // 등록모드에서  이미 등록된 키일 경우 시 플래그 데이터 비트 재설정
+  {
+        Reg_Fail_Flag = RESET;
+        U2_Tx_Buffer[5] &= 0xFB;
+   }
+   if( RF_Communi_Fail == SET)          // 등록 모드에서  통신 실패 시 플래그 데이터 비트 재설정
+   {
+        RF_Communi_Fail = RESET;
+        U2_Tx_Buffer[5] &= 0xF7;
+   }
 
-         U1_Tx_Flag= RESET;
-         Rx_Compli_Flag = RESET;
-         CNT = 0;
+   U1_Tx_Flag= RESET;
+   Rx_Compli_Flag = RESET;
+   CNT = 0;
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-/******************** 월패드 패킷에 대한 응답 패킷 송신  함수  *******************/
-/////////////////////////////////////////////////////////////////////////////////////////////////
-void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수 
-{
-      for(unsigned char i = 0 ; i < Tx_LENGTH ; i++)
-      {
-           USART_SendData(USART2,U2_Tx_Buffer[i]);  
-           while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET); // wait for trans
-           
-           #ifdef Consol_LOG 
-           if (i==5 && Reg_key_Value_Receive_Flag != SET && RF_DATA_RQST_Flag != SET && U2_Tx_Buffer[i]!=0)
-           {
-              if ( (U2_Tx_Buffer[i]&0x80) == 0x80 )
-                printf ("\r\n[System                ] RF Communication Error\r\n");     
-              if ( (U2_Tx_Buffer[i]&0x01) == 0x01 )
-                printf ("\r\n[System                ] call Button is Pushed and shared to WallPAD\r\n");     
-           }
-           #endif                
-      }
-
-        g_WatchdogEvent = SET;   // 통신시에 계속 이벤트 셋팅 
-        Watch_Dog_Flag_CNT = 0; // 
-        
-        GPIO_WriteBit(GPIOB,  GPIO_Pin_0 , (BitAction) Bit_RESET);  // Receive Pin Enable
-        USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);     
- 
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////////
 /******************** 각 명령어별 동작  함수  *******************/
 ///////////////////////////////////////////////////////////////////////////////////
-    int tobeerased=0;
 void CMD(void)
 {
     unsigned char Requested_CMD;
@@ -608,9 +531,7 @@ void CMD(void)
         case EQUIP_INFOR_RQST:              // 0x01 기기 정보 요청
         {
               TX_CMD = EQUIP_INFOR_RSPN ; 
-              
               Tx_LENGTH = 15;
-              
               Device_Info_Flag = SET;
               
               U2_Tx_Buffer[5] = 0x00;
@@ -622,58 +543,13 @@ void CMD(void)
               U2_Tx_Buffer[11] = 0x01; 
               U2_Tx_Buffer[12] = 0x00;
               U2_Tx_Buffer[13] = 0x60;
-            
         }
          break;
      } //  END of switch 
 } // END of CMD function
   
 
-///////////////////////////////////////////////////////////////////////////////////////////
-/******************** RF 모듈로 패킷 송신 하는  함수 *******************/
-//////////////////////////////////////////////////////////////////////////////////////////
-void USART1_TX(void)
-{
-#ifdef U1_DATA_MONITOR  
-    int tmp=0;
-#endif
-    
-        U1_Tx_Buffer[0] = U1_Paket_Type;
-        U1_Tx_Buffer[6] = U2_Rx_Buffer[5];
-        U1_Tx_Buffer[7] = U2_Rx_Buffer[6];
-        U1_Tx_Buffer[8] = U2_Rx_Buffer[7];
-        U1_Tx_Buffer[9] = U2_Rx_Buffer[8]; // site code
-        U1_Tx_Buffer[10] = U2_Rx_Buffer[9];
-        U1_Tx_Buffer[11] = U2_Rx_Buffer[10];
-        U1_Tx_Buffer[12] = U2_Rx_Buffer[11];
-        U1_Tx_Buffer[13] = U2_Rx_Buffer[12];  // dong , ho
-        U1_Tx_Buffer[14] = U2_Rx_Buffer[13];  // key no
-        U1_Tx_Buffer[15] = 0x00;              // key type
-        U1_Tx_Buffer[16] = 0x00;              // dummy
-        
-        
-          for(unsigned char i = 0 ; i < 17 ; i++)
-          {
-               USART_SendData(USART1,U1_Tx_Buffer[i]);  
-                
-               while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET); // wait for trans
-          }
 
-
-
-
-#ifdef U1_DATA_MONITOR
-        #ifdef Consol_LOG 
-        printf ("[CAM -> RF / Position : %d  -  ]",U1_Rx_DataPosition) ;      
-        for (tmp=0 ; tmp<17 ; tmp++)
-        {
-          printf ("%x  ",U1_Tx_Buffer[tmp]) ;
-        }
-        printf ("\r\n");
-        #endif
-#endif  
-}
-       
                   
 /******************** 이전 키 정보 비교 함수 *******************/
 unsigned char Key_Info_Compare(void)            //  

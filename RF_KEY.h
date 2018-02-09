@@ -3,6 +3,8 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void RF_Data_Confirm(unsigned char CNT);
+void RF_Packet_Erase_handler(void);
+
 
 /* Private define ------------------------------------------------------------*/
 #define RS485TX_ENABLE          GPIO_WriteBit(GPIOB,  GPIO_Pin_0 , (BitAction) Bit_SET)

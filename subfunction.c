@@ -46,7 +46,7 @@ void Key_Polling(void)
     {
       KeyActiveState = KEY_ACTIVE;
       #ifdef Consol_LOG 
-      printf ("\r\n[System                ] Call Button is Pushed\r\n");           
+      printf ("\r\n[System                ] Call Button is Pushed");           
       #endif
       
       if( Reg_Mode_Start_Flag == SET)  // 등록 모드 시작시 호출 버튼 누름
@@ -56,7 +56,7 @@ void Key_Polling(void)
              
          BuzzerRun(100, 1,80,10);
          #ifdef Consol_LOG 
-         printf ("\r\n[System                ] KEY Registration Mode Start Request by call Buttom\r\n");     
+         printf ("\r\n[System                ] KEY Registration Mode Start Request by call Buttom");     
          #endif
       }    
       if((Key_Reg_RQST_Flag == SET) && ( Reg_Mode_Start_Flag == RESET ))       // 등록 모드 중 등록 모드  종료시 호출 버튼 누름 
@@ -64,7 +64,7 @@ void Key_Polling(void)
          Key_Reg_End_Button_Flag = SET;
          GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_RESET);
          #ifdef Consol_LOG 
-         printf ("\r\n[System                ] KEY Registration Mode Stop Request by call Buttom\r\n");     
+         printf ("\r\n[System                ] KEY Registration Mode Stop Request by call Buttom");     
          #endif
       }    
 
@@ -73,7 +73,7 @@ void Key_Polling(void)
          U2_Tx_Buffer[5] |= 0x01;
          
          #ifdef Consol_LOG 
-         printf ("\r\n[System                ] Calling is Requested\r\n");     
+         printf ("\r\n[System                ] Calling is Requested");     
          #endif
          //Call_Button_Flag = SET;
       }    
@@ -84,7 +84,7 @@ void Key_Polling(void)
     {
        KeyActiveState = KEY_INACTIVE;
        #ifdef Consol_LOG 
-       printf ("\r\n[System                ] Call Button is Relesed\r\n");     
+       printf ("\r\n[System                ] Call Button is Relesed");     
        #endif
     }    
 } 
@@ -144,3 +144,35 @@ void  WatchDogTask(void)
             WatchDog_Reset();
        }
 }
+
+
+///////////////////////////////////////////////////////////////////////////
+/******************** 체크섬 만드는 함수 *******************/
+//////////////////////////////////////////////////////////////////////////
+unsigned char Make_Checksum(void)                       //  
+{
+      unsigned char Checksum = 0x02;
+      for(unsigned int i = 1 ; i< (Tx_LENGTH - 1) ; i++)
+      {
+         Checksum ^= U2_Tx_Buffer[i];
+         Checksum ++;
+      }
+      return Checksum;
+}
+//////////////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////////////
+/******************** 체크섬 검사 함수 *******************/
+//////////////////////////////////////////////////////////////////////////
+unsigned char Check_Checksum(void)                      // 
+{
+      unsigned char Checksum = 0x02;
+      for(unsigned char i = 1 ; i< (Rx_LENGTH -1) ; i++)
+      {        
+        Checksum ^= U2_Rx_Buffer[i];
+        Checksum ++;
+      }
+      return Checksum;
+}
+//////////////////////////////////////////////////////////////////////////

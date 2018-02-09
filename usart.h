@@ -4,3 +4,5 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void USART_Configuration(void);
+void USART2_TX(void);
+void USART1_TX(void);

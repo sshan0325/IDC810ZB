@@ -1,8 +1,14 @@
+/* Private define ------------------------------------------------------------*/
+extern unsigned char Tx_LENGTH;
+extern unsigned char Rx_LENGTH;
+extern unsigned char U2_Rx_Buffer[128];  
+
+/* Private function prototypes -----------------------------------------------*/
 void BuzzerRun(unsigned char Freq, unsigned char BuzzerCount, unsigned char Ontime, unsigned char Offtime);
 void Key_Polling(void);
 void Check_Key_State(void);
-
-/* Private define ------------------------------------------------------------*/
+unsigned char Make_Checksum(void);
+unsigned char Check_Checksum(void);
 
 /* KEY STATE -----------------------------------------------------------------*/
 #define KEY_PUSHED                      0

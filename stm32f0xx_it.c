@@ -149,13 +149,14 @@ void TIM14_IRQHandler(void) //10ms
             Time_Out_Flag_CNT = 0;
             
              #ifdef Consol_LOG 
-             int tmp=0;
+             //int tmp=0;
              printf ("\r\n[System                ] Watch_Dog Occured / DataPosition : %d  -  \r\n",U1_Rx_DataPosition);     
-             for (tmp=U1_Rx_DataPosition ; tmp<U1_Rx_DataPosition+17 ; tmp++)
-             {
-               printf ("%x, ",U1_Rx_Buffer[tmp]) ;
-             }             
-             printf ("\r\n");
+             GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_SET);
+             //for (tmp=U1_Rx_DataPosition ; tmp<U1_Rx_DataPosition+17 ; tmp++)
+             //{
+             //  printf ("%x, ",U1_Rx_Buffer[tmp]) ;
+             //}             
+             //printf ("\r\n");
              #endif           
         }
         

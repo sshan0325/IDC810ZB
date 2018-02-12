@@ -97,6 +97,7 @@ void Packet_handler(void)
                         Response();
                     }
                 }
+                U2_Rx_Compli_Flag=RESET;
           }
 }
 

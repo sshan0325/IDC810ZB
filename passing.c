@@ -18,10 +18,6 @@ unsigned char               U2_Tx_Buffer[128] = {0} ;
 ///////////////// DEVICE STATE /////////////////
 unsigned char Key_Reg_RQST_Flag = RESET;
 
-
-//Have to Check
-unsigned char Call_Button_Flag ;
-
 //Need to Check
 extern unsigned char U2_Rx_Compli_Flag ;
 unsigned char Temp_buffer[17] ={0};
@@ -94,7 +90,7 @@ void Packet_handler(void)
                     {  
                           Device_Info_Flag = RESET;  
                           Delay(12);                              //  idle time Delay 
-                        Response();
+                          Response();
                     }
                 }
                 U2_Rx_Compli_Flag=RESET;
@@ -238,23 +234,31 @@ void CMD(void)
         { 
               Tx_LENGTH = 8 ; 
               TX_CMD = RF_STAUS_RSPN ;
-                    
-              if((RF_Data_Confirm_Flag == SET) || (RF_DATA_RQST_Flag == SET)|| (Status_Value_Clear_Flag == SET) 
-                || (Reg_Mode_Start_Flag == SET) || (Key_Reg_RQST_Flag == SET) ||  (Key_Reg_End_Flag == SET) ) 
-              {                                                         //  각 기능 구현 중 다시 평상시 패킷 들어올때 평상시 패킷 전송 
+
+               if(Key_Reg_RQST_Flag)                      // 등록 모드 중 평상 시 폴링시 RF 모듈를 등록 모드 종료시킴
+               {                                                     // 중간에 월패트가  꺼지고 나서 다시 켰을때 
+                      GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_RESET);  //  LED OFF
+                      U1_Paket_Type = 0xA0;                // 등록 종료 RF 모듈에 알림
+                      USART1_TX();
+               }         
+               
+               if(U1_Tx_Flag == RESET)                             // RF 모듈 폴링시 메인문 돌동안1번만 보내게 하는 루틴
+               {
+                      U1_Tx_Flag = SET;
+                      U1_Paket_Type = 0xD0;  
+                      U1_Tx_Buffer[1] = 0xD0;
+                      U1_Tx_Buffer[2] = U2_Rx_Buffer[5];
+                      U1_Tx_Buffer[3] = U2_Rx_Buffer[6];
+  
+                      USART1_TX();
+           
+                      Time_Out_Flag = SET; //  타임 아웃
+                }
+               
+               if((RF_Data_Confirm_Flag == SET) || (RF_DATA_RQST_Flag == SET)|| (Status_Value_Clear_Flag == SET) 
+                  || (Reg_Mode_Start_Flag == SET) || (Key_Reg_RQST_Flag == SET) ||  (Key_Reg_End_Flag == SET) ) 
+               {                                                         //  각 기능 구현 중 다시 평상시 패킷 들어올때 평상시 패킷 전송 
                      Clear_Tx_Buffer();
-                     if(Call_Button_Flag == SET)                // RF 모듈 뽑았을 때 버퍼 클리어로 인해 호출 안되는 현상 방지
-                     {
-                            Call_Button_Flag = RESET;
-                            U2_Tx_Buffer[5] |= 0x01;
-                     }
-                    
-                     if(Key_Reg_RQST_Flag)                      // 등록 모드 중 평상 시 폴링시 RF 모듈를 등록 모드 종료시킴
-                     {                                                     // 중간에 월패트가  꺼지고 나서 다시 켰을때 
-                            GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_RESET);  //  LED OFF
-                            U1_Paket_Type = 0xA0;                // 등록 종료 RF 모듈에 알림
-                            USART1_TX();
-                     }
 
                      RF_Data_Confirm_Flag = RESET;             // 각 기능에 대한 플래그 초기화
                      Key_Reg_End_Flag = RESET;
@@ -262,26 +266,11 @@ void CMD(void)
                      Key_Reg_RQST_Flag = RESET;
                      Key_Reg_End_Flag = RESET;
                      Status_Value_Clear_Flag = RESET;
-                      
                      Key_Reg_U1_Send_Flag = RESET;             // 등록 실패 후 다시 재등록이 안됨 
-                      
                      Reg_key_Value_Receive_Flag = RESET;
-              } 
+               } 
 
-              RF_DATA_RQST_Flag = RESET;                        //전, 사이에 키인식 되면 키값이 들어오는것 방지
-    
-              if(U1_Tx_Flag == RESET)                             // RF 모듈 폴링시 메인문 돌동안1번만 보내게 하는 루틴
-              {
-                        U1_Tx_Flag = SET;
-                        U1_Paket_Type = 0xD0;  
-                        U1_Tx_Buffer[1] = 0xD0;
-                        U1_Tx_Buffer[2] = U2_Rx_Buffer[5];
-                        U1_Tx_Buffer[3] = U2_Rx_Buffer[6];
-    
-                        USART1_TX();
-             
-                        Time_Out_Flag = SET; //  타임 아웃
-               }
+               RF_DATA_RQST_Flag = RESET;                        //전, 사이에 키인식 되면 키값이 들어오는것 방지
         }
         break;
         
@@ -360,12 +349,6 @@ void CMD(void)
                 Key_Reg_RQST_Flag = SET;
                 Tx_LENGTH = 7;
                 
-                if(Call_Button_Flag == SET)                     // 중간에 호출 버튼 누름 방지
-                {
-                    U2_Tx_Buffer[5] = 0x00;
-                    Call_Button_Flag = RESET;
-                }
-                 
                 RF_DATA_RQST_Flag = RESET;     //  동록 모드 시작  전, 사이에 키인식 되면 키값이 들어오는것 방지
                 Reg_Mode_Start_Flag = SET;
                 

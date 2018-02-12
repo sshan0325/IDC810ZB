@@ -75,7 +75,6 @@ void Key_Polling(void)
          #ifdef Consol_LOG 
          printf ("\r\n[System                ] Calling is Requested");     
          #endif
-         //Call_Button_Flag = SET;
       }    
     }
 

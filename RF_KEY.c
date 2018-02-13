@@ -15,19 +15,19 @@ extern unsigned char    U1_Rx_DataPosition;
 extern unsigned char U2_Tx_Buffer[128];  
 extern unsigned char U2_Rx_Buffer[128];  
 
-/* FLAG -----------------------------------------------------------------*/
+/* RF_Key ---------------------------------------------------------------*/
+unsigned char Received_RF_KeyData_Count=0;
+
+/* FLAG ----------------------------------------------------------------*/
 unsigned char Reg_key_Value_Receive_Flag = RESET;
-unsigned char Usual_RF_Detec_Flag = RESET;
-extern unsigned char RF_Detec_Timeout_Flag ;
-unsigned char value_1 = 6;
+unsigned char RFKey_Detected = RESET;
 unsigned char Reg_Fail_Flag = RESET;
 unsigned char RF_Communi_Fail = RESET;
-extern unsigned char Time_Out_Flag ;
-extern unsigned char Time_Out_Flag_CNT;
+extern unsigned char RF_Comm_Time_Out_Flag ;
+extern unsigned char RF_Comm_Time_Out_Flag_CNT;
 extern unsigned char Key_Reg_RQST_Flag;
-extern unsigned char RF_DATA_RQST_Flag;
 
-//Need to Check
+unsigned char value_1 = 6;
 unsigned char RF_Packet_1_4 = 0x00;
 unsigned char RF_Packet_5 = 0x00;
 unsigned char RF_Data_Check = RESET;
@@ -58,27 +58,34 @@ void RF_Key_Packet_handler(void)
         {
         case RF_KEY_CHECK:
                 RF_Key_CNT = U1_Rx_Buffer[U1_Rx_DataPosition+2];
+                if(RF_Key_CNT>=5)       RF_Key_CNT=5;
             
                 U2_Tx_Buffer[6] =  RF_Key_CNT; //U1_DA_Buffer[2];  // 키 갯수 전달 
                 
-                Time_Out_Flag = RESET;     // RF 모듈 타임 아웃 초기화
-                Time_Out_Flag_CNT = 0;
+                RF_Comm_Time_Out_Flag = RESET;     // RF 모듈 타임 아웃 초기화
+                RF_Comm_Time_Out_Flag_CNT = 0;
                 
                 U1_Rx_Count -= RF_KEY_PACKET_SIZE;
                 U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE);
                 break;
                 
         case RF_KEY_RECOGNITION:   
+                
                 #ifdef Consol_LOG                      
                 printf ("\r\n[RF Key Comm           ] RF_KEY Recognition Done(Key Count : %d)",RF_Key_CNT); 
                 #endif                      
-                
-                Usual_RF_Detec_Flag = SET;
-                RF_Data_Save(/*RF_Key_CNT*/ 1 ,&U1_Rx_Buffer[U1_Rx_DataPosition]);  // 키 데이터 저장 함수 
-                RF_Detec_Timeout_Flag = SET;                  // 평상시 키인식 타임 아웃 플래그 셋팅      
+                RFKey_Detected = SET;
+                Received_RF_KeyData_Count++;
 
                 U1_Rx_Count -= RF_KEY_PACKET_SIZE;
-                U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE);                    
+                U1_Rx_DataPosition += RF_KEY_PACKET_SIZE;                                    
+                
+                if(Received_RF_KeyData_Count >= RF_Key_CNT)
+                {
+                    RF_Data_Save(RF_Key_CNT, &U1_Rx_Buffer[U1_Rx_DataPosition-(RF_KEY_PACKET_SIZE*RF_Key_CNT)]);  // 키 데이터 저장 함수 
+                    RF_Key_CNT=0;
+                    Received_RF_KeyData_Count=0;
+                }                
                 break;
                 
         case RF_KEY_REG_SUCC:

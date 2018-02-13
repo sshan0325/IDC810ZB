@@ -1,5 +1,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
+#include "RF_KEY.h"
 #include "stm32f0xx.h"
 #include "platform_config.h"
 
@@ -67,6 +68,7 @@ void USART_Configuration(void)
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수 
 {
+      //printf ("\r\n[System                ] Tx Length : %d \r\n", U2_Tx_Buffer[2]);     
       for(unsigned char i = 0 ; i < Tx_LENGTH ; i++)
       {
            USART_SendData(USART2,U2_Tx_Buffer[i]);  
@@ -84,7 +86,8 @@ void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수
       }
       g_WatchdogEvent = SET;   // 통신시에 계속 이벤트 셋팅 
      
-      GPIO_WriteBit(GPIOB,  GPIO_Pin_0 , (BitAction) Bit_RESET);  // Receive Pin Enable
+      RS485TX_DISABLE;
+      USART_Cmd(USART2, ENABLE);
       USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);     
  }
 /////////////////////////////////////////////////////////////////////////////////////////////////

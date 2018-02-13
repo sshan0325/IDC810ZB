@@ -42,49 +42,43 @@ void Key_Polling(void)
     /* KEY STATE CHECK -------------------------------------------------------*/
     Check_Key_State();
     
+    /* Change KEY ACTIVE STATE -> INACTIVE -----------------------------------*/
     if (Key_State == KEY_PUSHED && KeyActiveState==KEY_INACTIVE)
     {
-      KeyActiveState = KEY_ACTIVE;
       #ifdef Consol_LOG 
       printf ("\r\n[System                ] Call Button is Pushed");           
       #endif
       
+      U2_Tx_Buffer[5] |= 0x01;
+      KeyActiveState = KEY_ACTIVE;
+
       if( Reg_Mode_Start_Flag == SET)  // 등록 모드 시작시 호출 버튼 누름
       {
-         U2_Tx_Buffer[5] |= 0x01;
-         GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_SET);
-             
-         BuzzerRun(100, 1,80,10);
          #ifdef Consol_LOG 
          printf ("\r\n[System                ] KEY Registration Mode Start Request by call Buttom");     
          #endif
+         GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_SET);
+         BuzzerRun(100, 1,80,10);
       }    
-      if((Key_Reg_RQST_Flag == SET) && ( Reg_Mode_Start_Flag == RESET ))       // 등록 모드 중 등록 모드  종료시 호출 버튼 누름 
+
+      if((Key_Reg_RQST_Flag == SET) && ( Reg_Mode_Start_Flag == RESET ))      
       { 
-         Key_Reg_End_Button_Flag = SET;
-         GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_RESET);
          #ifdef Consol_LOG 
          printf ("\r\n[System                ] KEY Registration Mode Stop Request by call Buttom");     
          #endif
-      }    
-
-      if(Key_Reg_RQST_Flag == RESET)  //  평상시 호출시
-      {
-         U2_Tx_Buffer[5] |= 0x01;
-         
-         #ifdef Consol_LOG 
-         printf ("\r\n[System                ] Calling is Requested");     
-         #endif
+         U2_Tx_Buffer[5] &= 0xFE;
+         Key_Reg_End_Button_Flag = SET;
+         GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_RESET);
       }    
     }
 
     /* Change KEY ACTIVE STATE -> INACTIVE -----------------------------------*/
     if((Key_State == KEY_RELEASED) && (KeyActiveState == KEY_ACTIVE)) 
     {
-       KeyActiveState = KEY_INACTIVE;
        #ifdef Consol_LOG 
        printf ("\r\n[System                ] Call Button is Relesed");     
        #endif
+       KeyActiveState = KEY_INACTIVE;
     }    
 } 
 

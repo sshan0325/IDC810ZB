@@ -18,6 +18,10 @@ unsigned char               U2_Tx_Buffer[128] = {0} ;
 ///////////////// DEVICE STATE /////////////////
 unsigned char Key_Reg_RQST_Flag = RESET;
 
+///////////////// Flag /////////////////////////////
+extern unsigned char RFKey_Detected;
+
+
 //Need to Check
 extern unsigned char U2_Rx_Compli_Flag ;
 unsigned char Temp_buffer[17] ={0};
@@ -30,11 +34,7 @@ unsigned char Reg_Mode_Start_Flag = RESET;
 extern unsigned char Key_Reg_End_Button_Flag ;
 extern unsigned char RF_Key_CNT;
 unsigned char Tx_LENGTH = 22;
-unsigned char CMD_Buffer[8] = { RF_STATUS_RQST , RF_STATUS_CLR_RQST , RF_DATA_RQST , RF_DATA_CONFIRM_RQST ,
-                                                REG_MODE_START_RQST , REG_KEY_DATA_RQST , REG_MODE_END_RQST , EQUIP_INFOR_RQST};
-unsigned char KEY_Number_to_Confirm = 0;
 extern unsigned char Reg_key_Value_Receive_Flag ;
-extern unsigned char Usual_RF_Detec_Flag;
 unsigned char U1_Tx_Buffer[128]= {0};
 unsigned char Key_Reg_Timeout_flag = RESET;
 extern unsigned int Key_Reg_Timeout_CNT ;
@@ -44,12 +44,13 @@ unsigned char Key_Reg_U1_Send_Flag = RESET;
 unsigned char Reg_Compli_Flag = RESET;
 unsigned char Key_Save_Flag = RESET;
 unsigned char U1_Paket_Type = 0x00;
-unsigned char Time_Out_Flag = RESET;
+unsigned char RF_Comm_Time_Out_Flag = RESET;
 unsigned char Status_Value_Clear_Flag = RESET;
 extern unsigned char RF_Key_Data[128];
-unsigned char U1_Tx_Flag =  RESET;
 unsigned char Watch_Dog_init_Flag = SET;
 extern unsigned char CNT ;
+unsigned char CMD_Buffer[8] = { RF_STATUS_RQST , RF_STATUS_CLR_RQST , RF_DATA_RQST , RF_DATA_CONFIRM_RQST ,
+                                                REG_MODE_START_RQST , REG_KEY_DATA_RQST , REG_MODE_END_RQST , EQUIP_INFOR_RQST};
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private functions ---------------------------------------------------------*/
@@ -74,7 +75,7 @@ void Packet_handler(void)
                 {
                     CMD();
                     Delay(12);                              //  idle time Delay 
-                    Response();                   
+                    Response();
                 }
                 U2_Rx_Compli_Flag=RESET;
           }
@@ -196,7 +197,6 @@ void Response(void)
         U2_Tx_Buffer[5] &= 0xF7;
    }
 
-   U1_Tx_Flag= RESET;
    U2_Rx_Compli_Flag = RESET;
    CNT = 0;
 }
@@ -212,7 +212,16 @@ void CMD(void)
     unsigned char Requested_CMD;
     Requested_CMD = U2_Rx_Buffer[3];
 
-      
+#ifdef  U2_DATA_MONITOR
+    int tmp;
+    printf ("\r\nReceivce U2 Data :");
+    for (tmp=0 ; tmp< U2_Rx_Buffer[2] ; tmp ++)
+    {
+        printf ("%x  ", U2_Rx_Buffer[tmp]);
+    }
+#endif
+    
+    
     switch(Requested_CMD)
     {
         /***************** 0x11 상태 값 요청 ****************/
@@ -228,18 +237,12 @@ void CMD(void)
                       USART1_TX();
                }         
                
-               if(U1_Tx_Flag == RESET)                             // RF 모듈 폴링시 메인문 돌동안1번만 보내게 하는 루틴
-               {
-                      U1_Tx_Flag = SET;
-                      U1_Paket_Type = 0xD0;  
-                      U1_Tx_Buffer[1] = 0xD0;
-                      U1_Tx_Buffer[2] = U2_Rx_Buffer[5];
-                      U1_Tx_Buffer[3] = U2_Rx_Buffer[6];
-  
-                      USART1_TX();
-           
-                      Time_Out_Flag = SET; //  타임 아웃
-                }
+              U1_Paket_Type = 0xD0;  
+              U1_Tx_Buffer[1] = 0xD0;
+              U1_Tx_Buffer[2] = U2_Rx_Buffer[5];
+              U1_Tx_Buffer[3] = U2_Rx_Buffer[6];
+              USART1_TX();
+              RF_Comm_Time_Out_Flag = SET; //  타임 아웃
                
                if((RF_Data_Confirm_Flag == SET) || (RF_DATA_RQST_Flag == SET)|| (Status_Value_Clear_Flag == SET) 
                   || (Reg_Mode_Start_Flag == SET) || (Key_Reg_RQST_Flag == SET) ||  (Key_Reg_End_Flag == SET) ) 
@@ -296,7 +299,7 @@ void CMD(void)
               
               RF_DATA_RQST_Flag = SET;
 
-              if(Usual_RF_Detec_Flag == RESET)
+              if(RFKey_Detected == RESET)
               {
                     U2_Tx_Buffer[5] = 0x00;
                     RF_Key_CNT = 0;
@@ -309,11 +312,11 @@ void CMD(void)
         /***************** 0x22  스마트키 데이터 확인  ****************/      
         case RF_DATA_CONFIRM_RQST:  // 0x22  스마트키 데이터 확인
         {
-              #ifdef Consol_LOG        
-              printf ("\r\n[System                ] RF Data Confirm is Requested.");     
-              #endif                    
+                unsigned char KEY_Number_to_Confirm = 0;
+                #ifdef Consol_LOG        
+                printf ("\r\n[System                ] RF Data Confirm is Requested.");     
+                #endif                    
           
-                //U1_Rx_Count = 0;
                 KEY_Number_to_Confirm = U2_Rx_Buffer[5];                   // 요청 갯수 저장
                 RF_Data_Confirm(KEY_Number_to_Confirm);                 // 전송 데이터 확인 함수
                 TX_CMD = RF_DATA_CONFIRM_RSPN ;                       
@@ -321,7 +324,7 @@ void CMD(void)
                 Tx_LENGTH = 9;
                 RF_DATA_RQST_Flag = RESET;  
                 RF_Data_Confirm_Flag = SET;
-                Usual_RF_Detec_Flag = RESET;
+                RFKey_Detected = RESET;
          }
          break;
          
@@ -337,8 +340,6 @@ void CMD(void)
                 
                 RF_DATA_RQST_Flag = RESET;     //  동록 모드 시작  전, 사이에 키인식 되면 키값이 들어오는것 방지
                 Reg_Mode_Start_Flag = SET;
-                
-                //U1_Rx_Count = 0;                        // 등록 모드 시작 전, 키 인식 되면  U1_Rx_Count 증가되서 CA나 BA를 못받게 됨
          }
          break;  
          
@@ -384,8 +385,6 @@ void CMD(void)
                      USART1_TX();
                 }
             
-                //U1_Rx_Count = 0 ;  // 등록 키값 전달 전에 평상시 키값 들어오는 것 방지 
-
               if(Reg_key_Value_Receive_Flag == SET)  // 등록 키값 받았을때
               { 
                     if(Key_Reg_End_Button_Flag == RESET)             // 등록 종료버튼  안눌렀을 시
@@ -445,9 +444,9 @@ void CMD(void)
         /*************************** 0x33  스마트키 등록 모드 종료  ********************************/
         case REG_MODE_END_RQST:  // 0x33  스마트키 등록 모드 종료 
         {
-              #ifdef Consol_LOG        
-              printf ("\r\n[System                ] RF Status clear is Requested.");     
-              #endif                    
+               #ifdef Consol_LOG        
+               printf ("\r\n[System                ] RF Status clear is Requested.");     
+               #endif                    
                TX_CMD = REG_MODE_END_RSPN ;    
                Tx_LENGTH = 7;
                U2_Tx_Buffer[5] = 0x01;
@@ -490,7 +489,7 @@ void CMD(void)
               U2_Tx_Buffer[12] = 0x00;
               U2_Tx_Buffer[13] = 0x60;
         }
-         break;
+        break;
      } //  END of switch 
 } // END of CMD function
   

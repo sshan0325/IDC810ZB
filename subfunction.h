@@ -1,6 +1,5 @@
 /* Private define ------------------------------------------------------------*/
 extern unsigned char Tx_LENGTH;
-extern unsigned char Rx_LENGTH;
 extern unsigned char U2_Rx_Buffer[128];  
 
 /* Private function prototypes -----------------------------------------------*/

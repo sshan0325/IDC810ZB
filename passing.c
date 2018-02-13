@@ -32,7 +32,6 @@ extern unsigned char RF_Key_CNT;
 unsigned char Tx_LENGTH = 22;
 unsigned char CMD_Buffer[8] = { RF_STATUS_RQST , RF_STATUS_CLR_RQST , RF_DATA_RQST , RF_DATA_CONFIRM_RQST ,
                                                 REG_MODE_START_RQST , REG_KEY_DATA_RQST , REG_MODE_END_RQST , EQUIP_INFOR_RQST};
-unsigned char Rx_LENGTH = 0x00;
 unsigned char KEY_Number_to_Confirm = 0;
 extern unsigned char Reg_key_Value_Receive_Flag ;
 extern unsigned char Usual_RF_Detec_Flag;
@@ -45,12 +44,10 @@ unsigned char Key_Reg_U1_Send_Flag = RESET;
 unsigned char Reg_Compli_Flag = RESET;
 unsigned char Key_Save_Flag = RESET;
 unsigned char U1_Paket_Type = 0x00;
-extern unsigned char RF_Key_Detec_CNT_Flag ;
 unsigned char Time_Out_Flag = RESET;
 unsigned char Status_Value_Clear_Flag = RESET;
 extern unsigned char RF_Key_Data[128];
 unsigned char U1_Tx_Flag =  RESET;
-unsigned char Device_Info_Flag = RESET;
 unsigned char Watch_Dog_init_Flag = SET;
 extern unsigned char CNT ;
 /* Private function prototypes -----------------------------------------------*/
@@ -67,8 +64,6 @@ void Packet_handler(void)
 {
           if(U2_Rx_Compli_Flag == SET)
           {
-                Rx_LENGTH = U2_Rx_Buffer[2];
-
                 if(Watch_Dog_init_Flag)                 //  초기 통신 시작시 1회 왓치독 셋팅 
                 {
                     Watch_Dog_init_Flag = RESET;
@@ -77,21 +72,9 @@ void Packet_handler(void)
 
                 if( PacketValidation() == VALID) 
                 {
-                   CMD();
-                   if((RF_Key_Detec_CNT_Flag))  // 평상시 키 인식시 
-                    {
-                          RF_Key_Detec_CNT_Flag = RESET;
-                          Delay(12);                              //  idle time Delay 
-                          Response();
-                    }
-                    
-                    if((Status_Value_Clear_Flag)||(Reg_Mode_Start_Flag)||(Key_Reg_RQST_Flag)||(Key_Reg_End_Flag)||
-                      (RF_DATA_RQST_Flag)||(RF_Data_Confirm_Flag)|| (Device_Info_Flag) ) // 그 외에 명령들
-                    {  
-                          Device_Info_Flag = RESET;  
-                          Delay(12);                              //  idle time Delay 
-                          Response();
-                    }
+                    CMD();
+                    Delay(12);                              //  idle time Delay 
+                    Response();                   
                 }
                 U2_Rx_Compli_Flag=RESET;
           }
@@ -104,13 +87,16 @@ void Packet_handler(void)
 unsigned char PacketValidation(void)   
 {
     unsigned char Result=0;
+    unsigned char Rx_Length=0;
+    
+    Rx_Length = U2_Rx_Buffer[2];
     
     if( CMD_Check( U2_Rx_Buffer, sizeof(CMD_Buffer)/sizeof(unsigned char)))   
     {
         Result ++; 
     }
      
-    if( U2_Rx_Buffer[(Rx_LENGTH-1)] == Check_Checksum())        
+    if( U2_Rx_Buffer[(Rx_Length-1)] == Check_Checksum())        
     {
         Result ++; 
     }
@@ -493,8 +479,7 @@ void CMD(void)
               #endif
               TX_CMD = EQUIP_INFOR_RSPN ; 
               Tx_LENGTH = 15;
-              Device_Info_Flag = SET;
-              
+
               U2_Tx_Buffer[5] = 0x00;
               U2_Tx_Buffer[6] = 0x00;
               U2_Tx_Buffer[7] = 0x01;

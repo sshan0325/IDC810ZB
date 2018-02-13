@@ -22,7 +22,6 @@ extern unsigned char RF_Detec_Timeout_Flag ;
 unsigned char value_1 = 6;
 unsigned char Reg_Fail_Flag = RESET;
 unsigned char RF_Communi_Fail = RESET;
-unsigned char RF_Key_Detec_CNT_Flag = RESET;
 extern unsigned char Time_Out_Flag ;
 extern unsigned char Time_Out_Flag_CNT;
 extern unsigned char Key_Reg_RQST_Flag;
@@ -61,7 +60,6 @@ void RF_Key_Packet_handler(void)
                 RF_Key_CNT = U1_Rx_Buffer[U1_Rx_DataPosition+2];
             
                 U2_Tx_Buffer[6] =  RF_Key_CNT; //U1_DA_Buffer[2];  // 키 갯수 전달 
-                RF_Key_Detec_CNT_Flag = SET;
                 
                 Time_Out_Flag = RESET;     // RF 모듈 타임 아웃 초기화
                 Time_Out_Flag_CNT = 0;
@@ -69,7 +67,20 @@ void RF_Key_Packet_handler(void)
                 U1_Rx_Count -= RF_KEY_PACKET_SIZE;
                 U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE);
                 break;
-              
+                
+        case RF_KEY_RECOGNITION:   
+                #ifdef Consol_LOG                      
+                printf ("\r\n[RF Key Comm           ] RF_KEY Recognition Done(Key Count : %d)",RF_Key_CNT); 
+                #endif                      
+                
+                Usual_RF_Detec_Flag = SET;
+                RF_Data_Save(/*RF_Key_CNT*/ 1 ,&U1_Rx_Buffer[U1_Rx_DataPosition]);  // 키 데이터 저장 함수 
+                RF_Detec_Timeout_Flag = SET;                  // 평상시 키인식 타임 아웃 플래그 셋팅      
+
+                U1_Rx_Count -= RF_KEY_PACKET_SIZE;
+                U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE);                    
+                break;
+                
         case RF_KEY_REG_SUCC:
                 if(Key_Reg_RQST_Flag == SET) 
                 {
@@ -121,33 +132,6 @@ void RF_Key_Packet_handler(void)
                     U1_Rx_Count -= RF_KEY_PACKET_SIZE;
                     U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE);                  
                 }                
-                break;
-              
-        case RF_KEY_RECOGNITION:   
-                if ((RF_Key_CNT * RF_KEY_PACKET_SIZE) <= U1_Rx_Count)
-                {
-                    #ifdef Consol_LOG                      
-                    printf ("\r\n[RF Key Comm           ] RF_KEY Recognition Done(Key Count : %d)",RF_Key_CNT); 
-                    #endif                      
-                    
-                    RF_Key_Detec_CNT_Flag = SET;
-
-                    if(RF_Key_CNT > 5)                 // 인식 키 개수가 5개 이상일 경우
-                    {
-                          //U1_Rx_Count = 0;                // 배열 카운트 초기화 안하면 시스템 다운
-                          RF_Key_CNT = 5;  
-                    }
-                    Usual_RF_Detec_Flag = SET;
-                    RF_Data_Save(RF_Key_CNT,&U1_Rx_Buffer[U1_Rx_DataPosition]);  // 키 데이터 저장 함수 
-                    RF_Detec_Timeout_Flag = SET;                  // 평상시 키인식 타임 아웃 플래그 셋팅      
-
-                    U1_Rx_Count -= RF_KEY_PACKET_SIZE;
-                    U1_Rx_DataPosition = (U1_Rx_DataPosition+RF_KEY_PACKET_SIZE);                    
-                }
-                else
-                {
-                  
-                }
                 break;
         default:
             U1_Rx_Count --;

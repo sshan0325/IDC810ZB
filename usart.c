@@ -9,7 +9,6 @@ USART_InitTypeDef                   USART_InitStructure;
 extern unsigned char  Tx_LENGTH;
 extern unsigned char  U2_Tx_Buffer[128];
 extern unsigned char  g_WatchdogEvent;
-extern unsigned int     Watch_Dog_Flag_CNT;
 extern unsigned char  U1_Tx_Buffer[128];
 extern unsigned char  U2_Rx_Buffer[128];  
 extern unsigned char  U1_Paket_Type;
@@ -84,8 +83,7 @@ void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수
            #endif                
       }
       g_WatchdogEvent = SET;   // 통신시에 계속 이벤트 셋팅 
-      Watch_Dog_Flag_CNT = 0; // 
-      
+     
       GPIO_WriteBit(GPIOB,  GPIO_Pin_0 , (BitAction) Bit_RESET);  // Receive Pin Enable
       USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);     
  }

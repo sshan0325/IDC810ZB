@@ -167,7 +167,11 @@ unsigned char Make_Checksum(void)                       //
 unsigned char Check_Checksum(void)                      // 
 {
       unsigned char Checksum = 0x02;
-      for(unsigned char i = 1 ; i< (Rx_LENGTH -1) ; i++)
+      unsigned char Rx_Length = 0;
+      
+      Rx_Length = U2_Rx_Buffer[2];
+      
+      for(unsigned char i = 1 ; i< (Rx_Length -1) ; i++)
       {        
         Checksum ^= U2_Rx_Buffer[i];
         Checksum ++;

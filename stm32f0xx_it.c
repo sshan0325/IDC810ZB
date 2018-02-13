@@ -34,15 +34,12 @@ unsigned char Timer14_CNT = 0;
 
 
 /*************************** FLAG *********************************/
-unsigned int Watch_Dog_Flag_CNT = 0;
 unsigned char Usaul_RF_Detec_Erase_Flag = RESET;
 unsigned char RF_Detec_Timeout_Flag = RESET;
 extern unsigned char Key_Reg_End_Button_Flag ;
 extern unsigned char Time_Out_Flag;
-extern unsigned char RF_Key_Detec_CNT_Flag ;
 volatile unsigned char Time_Out_Flag_CNT = 0;
 extern unsigned char Key_Reg_Timeout_flag;
-unsigned char Watch_Dog_Flag = SET ;
 
 //Need to Check
 unsigned int Key_Reg_Timeout_CNT = 0;
@@ -121,7 +118,6 @@ void TIM14_IRQHandler(void) //10ms
         Timer14_CNT ++;
         
         if(RF_Detec_Timeout_Flag)           RF_Detec_Timeout_CNT++;
-        if(Watch_Dog_Flag)                      Watch_Dog_Flag_CNT ++;
         if(Time_Out_Flag)                       Time_Out_Flag_CNT++;
         if(Key_Reg_Timeout_flag)             Key_Reg_Timeout_CNT ++;
         
@@ -132,7 +128,6 @@ void TIM14_IRQHandler(void) //10ms
               Time_Out_Flag_CNT = 0;
               
               U2_Tx_Buffer[5] |= 0x80;
-              RF_Key_Detec_CNT_Flag = SET;
         }
         
            
@@ -141,29 +136,6 @@ void TIM14_IRQHandler(void) //10ms
               Key_Reg_Timeout_CNT = 0;
               Key_Reg_End_Button_Flag = SET;  // 타임 아웃시 종료 버튼 눌렸다고 강제 설정
               Key_Reg_Timeout_flag = RESET;
-        }
-        
-        if(Watch_Dog_Flag_CNT == 300)     // 3초, 
-        {
-            RF_Key_Detec_CNT_Flag = SET;
-            Time_Out_Flag_CNT = 0;
-            
-             #ifdef Consol_LOG 
-             printf ("\r\n[System                ] Watch_Dog Occured / DataPosition : %d  -  \r\n",U1_Rx_DataPosition);     
-             #endif           
-        }
-        
-        if(Watch_Dog_Flag_CNT == 2000) // 20 초  중간에 통신 끊어 질때 대비 
-        {
-            Watch_Dog_Flag_CNT = 0;      
-            g_WatchdogEvent = SET;  // 20 초마다 왓치독  이벤트 셋팅 
-            CNT ++;
-            if(CNT == 90)  //-> 30분마다 왓치독 리셋( 20초 * 30 : 10분, )
-            {
-                  CNT = 0;
-                  g_WatchdogEvent = RESET;
-                  Watch_Dog_Flag = RESET;
-            }
         }
     }
 }

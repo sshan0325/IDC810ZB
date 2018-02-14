@@ -11,7 +11,7 @@ extern unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] ;
 extern unsigned char    U1_Rx_DataPosition;
 extern unsigned char    U1_Rx_Count ;
 ////////////////// UART CH 2 ////////////////////
-extern unsigned char    U2_Rx_Buffer[128]; 
+extern unsigned char    U2_Rx_Buffer[U2_RX_BUFFER_SIZE]; 
 unsigned char               U2_Tx_Buffer[128] = {0} ;  
 
 
@@ -290,6 +290,11 @@ void CMD(void)
         {
               #ifdef Consol_LOG        
               printf ("\r\n[System                ] RF Data is Requested.");     
+              printf ("\r\nReceivce U2 Data :");
+              for (unsigned char tmp=0 ; tmp< 7 ; tmp ++)
+              {
+                  printf ("%x  ", U2_Rx_Buffer[tmp]);
+              }              
               #endif                    
               RF_Key_CNT = U2_Rx_Buffer[5];  // 요청한 데이터 패킷 갯수만 보내기 위함 
               

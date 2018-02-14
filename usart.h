@@ -1,5 +1,6 @@
 /* Private variables ---------------------------------------------------------*/
 #define U1_RX_BUFFER_SIZE               256
+#define U2_RX_BUFFER_SIZE               256
 
 
 /* Private function prototypes -----------------------------------------------*/

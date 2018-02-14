@@ -1,6 +1,7 @@
+#include "usart.h"
 /* Private define ------------------------------------------------------------*/
 extern unsigned char Tx_LENGTH;
-extern unsigned char U2_Rx_Buffer[128];  
+extern unsigned char U2_Rx_Buffer[U2_RX_BUFFER_SIZE];  
 
 /* Private function prototypes -----------------------------------------------*/
 void BuzzerRun(unsigned char Freq, unsigned char BuzzerCount, unsigned char Ontime, unsigned char Offtime);

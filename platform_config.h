@@ -9,7 +9,7 @@
 
 /* Private define ------------------------------------------------------------*/
 #define Consol_LOG              
-#define U1_DATA_MONITOR
+//#define U1_DATA_MONITOR
 //#define U2_DATA_MONITOR
 
 #define SET                     1

@@ -13,7 +13,7 @@ extern unsigned char    U1_Rx_DataPosition;
 
 /* UART  Ch2-------------------------------------------------------------*/
 extern unsigned char U2_Tx_Buffer[128];  
-extern unsigned char U2_Rx_Buffer[128];  
+extern unsigned char U2_Rx_Buffer[U2_RX_BUFFER_SIZE];  
 
 /* RF_Key ---------------------------------------------------------------*/
 unsigned char Received_RF_KeyData_Count=0;

@@ -27,7 +27,7 @@ int main(void)
               RF_Key_Packet_handler();              // RF 모듈 패킷 핸들러
               Packet_handler();                          // 월 패드 패킷 핸들러
               Key_Polling();                               // 호출 버튼 감지 함수
-              WatchDogTask();                          // 왓치독 이베트 셋팅 함수
+              WatchDog_Reset();                        // 왓치독 이베트 셋팅 함수
         }
 
 }

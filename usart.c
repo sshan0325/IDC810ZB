@@ -2,6 +2,7 @@
 #include "usart.h"
 #include "RF_KEY.h"
 #include "stm32f0xx.h"
+#include "subfunction.h"
 #include "platform_config.h"
 
 
@@ -9,9 +10,8 @@
 USART_InitTypeDef                   USART_InitStructure;
 extern unsigned char  Tx_LENGTH;
 extern unsigned char  U2_Tx_Buffer[128];
-extern unsigned char  g_WatchdogEvent;
 extern unsigned char  U1_Tx_Buffer[128];
-extern unsigned char  U2_Rx_Buffer[128];  
+extern unsigned char  U2_Rx_Buffer[U2_RX_BUFFER_SIZE];  
 extern unsigned char  U1_Paket_Type;
 extern unsigned char  Reg_key_Value_Receive_Flag ;
 extern unsigned char  RF_DATA_RQST_Flag;
@@ -68,12 +68,10 @@ void USART_Configuration(void)
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수 
 {
-      //printf ("\r\n[System                ] Tx Length : %d \r\n", U2_Tx_Buffer[2]);     
       for(unsigned char i = 0 ; i < Tx_LENGTH ; i++)
       {
            USART_SendData(USART2,U2_Tx_Buffer[i]);  
            while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET); // wait for trans
-
            #ifdef Consol_LOG 
            if (i==5 && Reg_key_Value_Receive_Flag != SET && RF_DATA_RQST_Flag != SET && U2_Tx_Buffer[i]!=0)
            {
@@ -82,13 +80,9 @@ void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수
               if ( (U2_Tx_Buffer[i]&0x01) == 0x01 )
                 printf ("\r\n[System                ] Command Tx to  WallPad(CallButton or Indicator)\r\n");     
            }
-           #endif                
+           #endif    
       }
-      g_WatchdogEvent = SET;   // 통신시에 계속 이벤트 셋팅 
-     
       RS485TX_DISABLE;
-      USART_Cmd(USART2, ENABLE);
-      USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);     
  }
 /////////////////////////////////////////////////////////////////////////////////////////////////
 

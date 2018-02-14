@@ -24,7 +24,7 @@ unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] = {0};
 /*************************** USART 2 ******************************/
 unsigned char U2_Rx_Count = 0 ;
 unsigned char U2_Rx_Compli_Flag = RESET;
-unsigned char U2_Rx_Buffer[128] = {0};
+unsigned char U2_Rx_Buffer[U2_RX_BUFFER_SIZE] = {0};
 extern unsigned char U2_Tx_Buffer[128] ;
 
 /*************************** FLAG *********************************/

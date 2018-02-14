@@ -8,7 +8,6 @@
 unsigned char                   Key_Polling_Count=0;
 unsigned char                   Key_State=KEY_RELEASED;
 unsigned char                   KeyActiveState=KEY_INACTIVE;
-unsigned char                   g_WatchdogEvent = RESET;
 static __IO uint32_t               TimingDelay;
 extern unsigned char        U2_Tx_Buffer[128];
 
@@ -125,19 +124,6 @@ void TimingDelay_Decrement(void)
     TimingDelay--;
   }
 }
-
-
-/******************** 왓치독 이벤트 셋팅 함수 *******************/
-void  WatchDogTask(void)
-{
-      if ( g_WatchdogEvent )
-      {
-            g_WatchdogEvent = RESET;
-            //Watch_Dog_Falg = SET;
-            WatchDog_Reset();
-       }
-}
-
 
 ///////////////////////////////////////////////////////////////////////////
 /******************** 체크섬 만드는 함수 *******************/

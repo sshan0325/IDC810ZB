@@ -10,6 +10,7 @@ unsigned char                   Key_State=KEY_RELEASED;
 unsigned char                   KeyActiveState=KEY_INACTIVE;
 static __IO uint32_t               TimingDelay;
 extern unsigned char        U2_Tx_Buffer[128];
+extern unsigned char U2_Rx_DataPosition;
 
 /*************************** TIMER ********************************/
 extern unsigned char    Reg_Mode_Start_Flag;
@@ -149,11 +150,11 @@ unsigned char Check_Checksum(void)                      //
       unsigned char Checksum = 0x02;
       unsigned char Rx_Length = 0;
       
-      Rx_Length = U2_Rx_Buffer[2];
+      Rx_Length = U2_Rx_Buffer[U2_Rx_DataPosition+2];
       
       for(unsigned char i = 1 ; i< (Rx_Length -1) ; i++)
       {        
-        Checksum ^= U2_Rx_Buffer[i];
+        Checksum ^= U2_Rx_Buffer[U2_Rx_DataPosition+i];
         Checksum ++;
       }
       return Checksum;

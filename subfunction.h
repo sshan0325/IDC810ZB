@@ -1,4 +1,6 @@
+/* Include -------------------------------------------------------------------*/
 #include "usart.h"
+
 /* Private define ------------------------------------------------------------*/
 extern unsigned char Tx_LENGTH;
 extern unsigned char U2_Rx_Buffer[U2_RX_BUFFER_SIZE];  

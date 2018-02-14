@@ -23,6 +23,8 @@ unsigned char U1_Rx_DataPosition = 0;
 unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] = {0};
 /*************************** USART 2 ******************************/
 unsigned char U2_Rx_Count = 0 ;
+unsigned char U2_Rx_DataSavePosition = 0;
+unsigned char U2_Rx_DataPosition = 0;
 unsigned char U2_Rx_Compli_Flag = RESET;
 unsigned char U2_Rx_Buffer[U2_RX_BUFFER_SIZE] = {0};
 extern unsigned char U2_Tx_Buffer[128] ;
@@ -134,23 +136,30 @@ void TIM14_IRQHandler(void) //10ms
 
 void USART2_IRQHandler(void)     
 {
-        if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
-        {
-                U2_Rx_Buffer[U2_Rx_Count++] = USART_ReceiveData(USART2);  
-                if(  U2_Rx_Buffer[0] != STX )            {  U2_Rx_Count = 0; }
-                if(  (U2_Rx_Count == 2) && (U2_Rx_Buffer[1] != RF_Camera_ID) )   { U2_Rx_Count = 0; }
-                if( U2_Rx_Buffer[2] == U2_Rx_Count ) 
-                {
-                      U2_Rx_Compli_Flag = SET ; 
-                      U2_Rx_Count = 0;
-                }
-        } // end of RX if
+    if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
+    {
+        U2_Rx_Buffer[U2_Rx_DataSavePosition] = USART_ReceiveData(USART2);  
+        U2_Rx_Count++;
+        U2_Rx_DataSavePosition++;
+    }
+#if 0  
+    if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
+    {
+            U2_Rx_Buffer[U2_Rx_Count++] = USART_ReceiveData(USART2);  
+            if(  U2_Rx_Buffer[0] != STX )            {  U2_Rx_Count = 0; }
+            if(  (U2_Rx_Count == 2) && (U2_Rx_Buffer[1] != RF_Camera_ID) )   { U2_Rx_Count = 0; }
+            if( U2_Rx_Buffer[2] == U2_Rx_Count ) 
+            {
+                  U2_Rx_Compli_Flag = SET ; 
+                  U2_Rx_Count = 0;
+            }
+    } // end of RX if
+#endif        
       
-        if(USART_GetITStatus(USART2, USART_IT_TXE) != RESET)
-        {
+    if(USART_GetITStatus(USART2, USART_IT_TXE) != RESET)
+    {
 
-        } // end of TX if
-    
+    } // end of TX if
 } 
 
 

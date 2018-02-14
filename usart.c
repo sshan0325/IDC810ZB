@@ -15,6 +15,7 @@ extern unsigned char  U2_Rx_Buffer[U2_RX_BUFFER_SIZE];
 extern unsigned char  U1_Paket_Type;
 extern unsigned char  Reg_key_Value_Receive_Flag ;
 extern unsigned char  RF_DATA_RQST_Flag;
+extern unsigned char U2_Rx_DataPosition;
 
 void USART_Configuration(void)
 {
@@ -93,15 +94,15 @@ void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수
 void USART1_TX(void)
 {
         U1_Tx_Buffer[0] = U1_Paket_Type;
-        U1_Tx_Buffer[6] = U2_Rx_Buffer[5];
-        U1_Tx_Buffer[7] = U2_Rx_Buffer[6];
-        U1_Tx_Buffer[8] = U2_Rx_Buffer[7];
-        U1_Tx_Buffer[9] = U2_Rx_Buffer[8]; // site code
-        U1_Tx_Buffer[10] = U2_Rx_Buffer[9];
-        U1_Tx_Buffer[11] = U2_Rx_Buffer[10];
-        U1_Tx_Buffer[12] = U2_Rx_Buffer[11];
-        U1_Tx_Buffer[13] = U2_Rx_Buffer[12];  // dong , ho
-        U1_Tx_Buffer[14] = U2_Rx_Buffer[13];  // key no
+        U1_Tx_Buffer[6] = U2_Rx_Buffer[U2_Rx_DataPosition+5];
+        U1_Tx_Buffer[7] = U2_Rx_Buffer[U2_Rx_DataPosition+6];
+        U1_Tx_Buffer[8] = U2_Rx_Buffer[U2_Rx_DataPosition+7];
+        U1_Tx_Buffer[9] = U2_Rx_Buffer[U2_Rx_DataPosition+8]; // site code
+        U1_Tx_Buffer[10] = U2_Rx_Buffer[U2_Rx_DataPosition+9];
+        U1_Tx_Buffer[11] = U2_Rx_Buffer[U2_Rx_DataPosition+10];
+        U1_Tx_Buffer[12] = U2_Rx_Buffer[U2_Rx_DataPosition+11];
+        U1_Tx_Buffer[13] = U2_Rx_Buffer[U2_Rx_DataPosition+12];  // dong , ho
+        U1_Tx_Buffer[14] = U2_Rx_Buffer[U2_Rx_DataPosition+13];  // key no
         U1_Tx_Buffer[15] = 0x00;              // key type
         U1_Tx_Buffer[16] = 0x00;              // dummy
         

@@ -13,6 +13,7 @@ extern unsigned char    U1_Rx_Count ;
 ////////////////// UART CH 2 ////////////////////
 extern unsigned char    U2_Rx_Buffer[U2_RX_BUFFER_SIZE]; 
 unsigned char               U2_Tx_Buffer[128] = {0} ;  
+extern unsigned char U2_Rx_DataPosition;
 
 
 ///////////////// DEVICE STATE /////////////////
@@ -63,7 +64,13 @@ unsigned char CMD_Buffer[8] = { RF_STATUS_RQST , RF_STATUS_CLR_RQST , RF_DATA_RQ
 //////////////////////////////////////////////////////////////////////////////
 void Packet_handler(void)       
 {
-          if(U2_Rx_Compli_Flag == SET)
+               #ifdef Consol_LOG 
+               printf ("\r\n%d,  %d",U2_Rx_Count, U2_Rx_DataPosition);     
+               #endif       
+          //if(U2_Rx_Compli_Flag == SET)
+          if((U2_Rx_Buffer[U2_Rx_DataPosition] == STX) && 
+              (U2_Rx_Buffer[U2_Rx_DataPosition+1] == RF_Camera_ID) && 
+              (U2_Rx_Buffer[U2_Rx_DataPosition+2] <= U2_Rx_Count) )
           {
                 if(Watch_Dog_init_Flag)                 //  초기 통신 시작시 1회 왓치독 셋팅 
                 {
@@ -77,7 +84,24 @@ void Packet_handler(void)
                     Delay(12);                              //  idle time Delay 
                     Response();
                 }
-                U2_Rx_Compli_Flag=RESET;
+               #ifdef Consol_LOG 
+               printf ("\r\n%d,  %d",U2_Rx_Count, U2_Rx_DataPosition);     
+               #endif                
+                //U2_Rx_Compli_Flag=RESET;
+                U2_Rx_Count-=U2_Rx_Buffer[U2_Rx_DataPosition+2];
+                U2_Rx_DataPosition+=U2_Rx_Buffer[U2_Rx_DataPosition+2];
+               #ifdef Consol_LOG 
+               printf ("\r\n%d,  %d",U2_Rx_Count, U2_Rx_DataPosition);     
+               #endif                                
+                
+          }
+          else
+          {
+              if(U2_Rx_Count>0)
+              {
+                U2_Rx_Count--;
+                U2_Rx_DataPosition++;
+              }
           }
 }
 
@@ -89,21 +113,48 @@ unsigned char PacketValidation(void)
 {
     unsigned char Result=0;
     unsigned char Rx_Length=0;
+#if 0    
+                #ifdef Consol_LOG 
+                printf ("\r\n[System                ] U2_Rx_Buffer Position : %d",U2_Rx_DataPosition);           
+                printf ("\r\n[System                ] U2_Rx_Buffer Data Count : %d",U2_Rx_Count);           
+                printf ("\r\n[System                ] Data Length : %d",U2_Rx_Buffer[U2_Rx_DataPosition+2]);           
+                printf ("\r\nU2_Rx_Data : ") ;            
+                for (unsigned char tmp=0 ; tmp<U2_Rx_Buffer[U2_Rx_DataPosition+2] ; tmp++)
+                {
+                  printf ("%x  ",U2_Rx_Buffer[U2_Rx_DataPosition+tmp]) ;
+                }
+                printf ("\r\n");
+                #endif       
+#endif                
+                
+    Rx_Length = U2_Rx_Buffer[U2_Rx_DataPosition+2];
     
-    Rx_Length = U2_Rx_Buffer[2];
-    
-    if( CMD_Check( U2_Rx_Buffer, sizeof(CMD_Buffer)/sizeof(unsigned char)))   
+    if( CMD_Check( &U2_Rx_Buffer[U2_Rx_DataPosition], sizeof(CMD_Buffer)/sizeof(unsigned char)))   
     {
         Result ++; 
     }
+    else 
+    {
+          #ifdef Consol_LOG 
+          printf ("\r\n[System                ] U2_Rx_Data is Invalid!!! __ CMD(%d)",U2_Rx_Buffer[U2_Rx_DataPosition+3] );           
+          
+          #endif                           
+    }
      
-    if( U2_Rx_Buffer[(Rx_Length-1)] == Check_Checksum())        
+    if( U2_Rx_Buffer[U2_Rx_DataPosition+(Rx_Length-1)] == Check_Checksum())        
     {
         Result ++; 
+    }
+    else
+    {
+          #ifdef Consol_LOG 
+          printf ("\r\n[System                ] U2_Rx_Data is Invalid!!! __ Packet Length(%d)",U2_Rx_Buffer[U2_Rx_DataPosition+2]);           
+          #endif                   
     }
 
     if(Result != VALID )
     {
+#if 0      
           U2_Rx_Count =0;
           U2_Rx_Compli_Flag = RESET ;
           for(unsigned char i = 0; i<92 ; i++ )
@@ -111,7 +162,11 @@ unsigned char PacketValidation(void)
               U2_Rx_Buffer[i] = 0;
               U2_Tx_Buffer[i] = 0;
           }
-     }
+#endif              
+     
+          U2_Rx_Count--;
+          U2_Rx_DataPosition++;
+    }
     return Result;
  }
 
@@ -147,7 +202,7 @@ void Response(void)
     U2_Tx_Buffer[1] = RF_Camera_ID ;
     U2_Tx_Buffer[2] = Tx_LENGTH ;
     U2_Tx_Buffer[3] = TX_CMD;
-    U2_Tx_Buffer[4] = U2_Rx_Buffer[4] ;
+    U2_Tx_Buffer[4] = U2_Rx_Buffer[U2_Rx_DataPosition+4] ;
     U2_Tx_Buffer[Tx_LENGTH-1] = Make_Checksum() ;
 
     /************* 평상시 RF 데이터 인식 시 응답패킷 저장 루틴 **************/
@@ -210,14 +265,14 @@ void Response(void)
 void CMD(void)
 {
     unsigned char Requested_CMD;
-    Requested_CMD = U2_Rx_Buffer[3];
+    Requested_CMD = U2_Rx_Buffer[U2_Rx_DataPosition+3];
 
 #ifdef  U2_DATA_MONITOR
     int tmp;
     printf ("\r\nReceivce U2 Data :");
-    for (tmp=0 ; tmp< U2_Rx_Buffer[2] ; tmp ++)
+    for (tmp=0 ; tmp< U2_Rx_Buffer[U2_Rx_DataPosition=2] ; tmp ++)
     {
-        printf ("%x  ", U2_Rx_Buffer[tmp]);
+        printf ("%x  ", U2_Rx_Buffer[U2_Rx_DataPosition+tmp]);
     }
 #endif
     
@@ -239,8 +294,8 @@ void CMD(void)
                
               U1_Paket_Type = 0xD0;  
               U1_Tx_Buffer[1] = 0xD0;
-              U1_Tx_Buffer[2] = U2_Rx_Buffer[5];
-              U1_Tx_Buffer[3] = U2_Rx_Buffer[6];
+              U1_Tx_Buffer[2] = U2_Rx_Buffer[U2_Rx_DataPosition+5];
+              U1_Tx_Buffer[3] = U2_Rx_Buffer[U2_Rx_DataPosition+6];
               USART1_TX();
               RF_Comm_Time_Out_Flag = SET; //  타임 아웃
                
@@ -273,12 +328,12 @@ void CMD(void)
 
               TX_CMD = RF_STAUS_CLR_RSPN;
 
-              if((U2_Rx_Buffer[5] & 0x80 ) == 0x80)  // 상태 값 해제 패킷에 따라 비트 클리어 
+              if((U2_Rx_Buffer[U2_Rx_DataPosition+5] & 0x80 ) == 0x80)  // 상태 값 해제 패킷에 따라 비트 클리어 
               {
                       U2_Tx_Buffer[5] &= 0x7F;
               }
               
-              if((U2_Rx_Buffer[5] & 0x01 ) == 0x01)
+              if((U2_Rx_Buffer[U2_Rx_DataPosition+5] & 0x01 ) == 0x01)
               {
                        U2_Tx_Buffer[5] &= 0xFE;
                }
@@ -293,10 +348,10 @@ void CMD(void)
               printf ("\r\nReceivce U2 Data :");
               for (unsigned char tmp=0 ; tmp< 7 ; tmp ++)
               {
-                  printf ("%x  ", U2_Rx_Buffer[tmp]);
+                  printf ("%x  ", U2_Rx_Buffer[U2_Rx_DataPosition+tmp]);
               }              
               #endif                    
-              RF_Key_CNT = U2_Rx_Buffer[5];  // 요청한 데이터 패킷 갯수만 보내기 위함 
+              RF_Key_CNT = U2_Rx_Buffer[U2_Rx_DataPosition+5];  // 요청한 데이터 패킷 갯수만 보내기 위함 
               
               TX_CMD = RF_DATA_RSPN; //  평상시 스마트 키 인식시 
 
@@ -322,7 +377,7 @@ void CMD(void)
                 printf ("\r\n[System                ] RF Data Confirm is Requested.");     
                 #endif                    
           
-                KEY_Number_to_Confirm = U2_Rx_Buffer[5];                   // 요청 갯수 저장
+                KEY_Number_to_Confirm = U2_Rx_Buffer[U2_Rx_DataPosition+5];                   // 요청 갯수 저장
                 RF_Data_Confirm(KEY_Number_to_Confirm);                 // 전송 데이터 확인 함수
                 TX_CMD = RF_DATA_CONFIRM_RSPN ;                       
                 U2_Tx_Buffer[5] = KEY_Number_to_Confirm;
@@ -377,7 +432,7 @@ void CMD(void)
                {
                        for(char i = 5 ; i < 14 ; i++)
                        {
-                               Temp_buffer[i] = U2_Rx_Buffer[i];
+                               Temp_buffer[i] = U2_Rx_Buffer[U2_Rx_DataPosition+i];
                        }
                        
                        Key_Save_Flag = SET;
@@ -507,7 +562,7 @@ unsigned char Key_Info_Compare(void)            //
       char Compare_CNT = 0;
        for(char i = 5 ; i < 14 ; i++)
        {
-               if(Temp_buffer[i] == U2_Rx_Buffer[i])
+               if(Temp_buffer[i] == U2_Rx_Buffer[U2_Rx_DataPosition+i])
                  Compare_CNT ++;
        }  
       if(Compare_CNT == 9)       

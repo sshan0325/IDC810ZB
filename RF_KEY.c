@@ -14,7 +14,7 @@ extern unsigned char    U1_Rx_DataPosition;
 /* UART  Ch2-------------------------------------------------------------*/
 extern unsigned char U2_Tx_Buffer[128];  
 extern unsigned char U2_Rx_Buffer[U2_RX_BUFFER_SIZE];  
-
+extern unsigned char U2_Rx_DataPosition;
 /* RF_Key ---------------------------------------------------------------*/
 unsigned char Received_RF_KeyData_Count=0;
 
@@ -167,7 +167,7 @@ void RF_Data_Confirm(unsigned char CNT)  // 인식된 키 데이터 확인 함수
                   
                 for(unsigned char j = value_1 ; j <= (value_1 + 15) ;j++)
                 {
-                      if(U2_Rx_Buffer[j] == RF_Key_Data[j-6])          { RF_Data_Check ++;  }
+                      if(U2_Rx_Buffer[U2_Rx_DataPosition+j] == RF_Key_Data[j-6])          { RF_Data_Check ++;  }
                 }
                     
                  

@@ -25,9 +25,13 @@ int main(void)
         while (1)
         {
               RF_Key_Packet_handler();              // RF 모듈 패킷 핸들러
+              printf ("\r\n[System                ] RF_Key_Packet_handler Done.\r\n");     
               Packet_handler();                          // 월 패드 패킷 핸들러
+              printf ("\r\n[System                ] Packet_handler Done.\r\n");     
               Key_Polling();                               // 호출 버튼 감지 함수
+              printf ("\r\n[System                ] Key_Polling Done.\r\n");     
               WatchDog_Reset();                        // 왓치독 이베트 셋팅 함수
+              printf ("\r\n[System                ] WatchDog_Reset Done.\r\n");     
         }
 
 }

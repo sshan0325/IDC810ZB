@@ -25,6 +25,7 @@ unsigned char U1_Rx_Buffer[U1_RX_BUFFER_SIZE] = {0};
 unsigned char U2_Rx_Count = 0 ;
 unsigned char U2_Rx_Compli_Flag = RESET;
 unsigned char U2_Rx_Buffer[U2_RX_BUFFER_SIZE] = {0};
+unsigned char U2_Rx_Buffer_R[U2_RX_BUFFER_SIZE] = {0};
 extern unsigned char U2_Tx_Buffer[128] ;
 
 /*************************** FLAG *********************************/
@@ -136,13 +137,29 @@ void USART2_IRQHandler(void)
 {
         if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
         {
-                U2_Rx_Buffer[U2_Rx_Count++] = USART_ReceiveData(USART2);  
-                if(  U2_Rx_Buffer[0] != STX )            {  U2_Rx_Count = 0; }
-                if(  (U2_Rx_Count == 2) && (U2_Rx_Buffer[1] != RF_Camera_ID) )   { U2_Rx_Count = 0; }
-                if( U2_Rx_Buffer[2] == U2_Rx_Count ) 
+                U2_Rx_Buffer_R[U2_Rx_Count++] = USART_ReceiveData(USART2);  
+                if(  U2_Rx_Buffer_R[0] != STX )            {  U2_Rx_Count = 0; }
+                if(  (U2_Rx_Count == 2) && (U2_Rx_Buffer_R[1] != RF_Camera_ID) )   { U2_Rx_Count = 0; }
+                if( U2_Rx_Buffer_R[2] == U2_Rx_Count ) 
                 {
+                      for (unsigned char tmp=0 ; tmp<U2_Rx_Count; tmp++)
+                      {
+                          U2_Rx_Buffer[tmp]=U2_Rx_Buffer_R[tmp];
+                      }                  
                       U2_Rx_Compli_Flag = SET ; 
                       U2_Rx_Count = 0;
+#if 1                      
+                      printf ("\r\n[System                ] U2_Rx_Buffer_R : ");      
+                      for (unsigned char tmp=0 ; tmp<U2_Rx_Buffer_R[2] ; tmp++)
+                      {
+                        printf ("  %x ",U2_Rx_Buffer_R[tmp]) ;
+                      }                    
+                      printf ("\r\n[System                ] U2_Rx_Buffer   : ");      
+                      for (unsigned char tmp=0 ; tmp<U2_Rx_Buffer_R[2] ; tmp++)
+                      {
+                        printf ("  %x ",U2_Rx_Buffer[tmp]) ;
+                      }                         
+#endif
                 }
         } // end of RX if
       

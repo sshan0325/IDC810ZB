@@ -72,15 +72,42 @@ void USART2_TX(void)            //현관 카메라 -> 월패드 전송 함수
       {
            USART_SendData(USART2,U2_Tx_Buffer[i]);  
            while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET); // wait for trans
+#if 0           
            #ifdef Consol_LOG 
            if (i==5 && Reg_key_Value_Receive_Flag != SET && RF_DATA_RQST_Flag != SET && U2_Tx_Buffer[i]!=0)
            {
               if ( (U2_Tx_Buffer[i]&0x80) == 0x80 )
-                printf ("\r\n[System                ] RF Communication Error\r\n");     
+              {
+                printf ("\r\n[System                ] RF Communication Error");     
+                printf ("\r\n[System                ] Tx Data : ");     
+                for (unsigned char tmp=0 ; tmp<U2_Tx_Buffer[2] ; tmp++)
+                {
+                  printf ("  %x ",U2_Tx_Buffer[tmp]) ;
+                }                    
+                printf ("\r\n[System                ] Rx Data : ");      
+                for (unsigned char tmp=0 ; tmp<U2_Rx_Buffer[2] ; tmp++)
+                {
+                  printf ("  %x ",U2_Rx_Buffer[tmp]) ;
+                }                                    
+                printf ("\r\n Data Position : %d / Data Count : %d",U2_Rx_Buffer[tmp]) ;
+              }
               if ( (U2_Tx_Buffer[i]&0x01) == 0x01 )
+              {
                 printf ("\r\n[System                ] Command Tx to  WallPad(CallButton or Indicator)\r\n");     
+                printf ("\r\n[System                ] Tx Data : ");     
+                for (unsigned char tmp=0 ; tmp<U2_Tx_Buffer[2] ; tmp++)
+                {
+                  printf ("  %x ",U2_Tx_Buffer[tmp]) ;
+                }                    
+                printf ("\r\n[System                ] Rx Data : ");      
+                for (unsigned char tmp=0 ; tmp<U2_Rx_Buffer[2] ; tmp++)
+                {
+                  printf ("  %x ",U2_Rx_Buffer[tmp]) ;
+                }                                                    
+              }
            }
            #endif    
+#endif           
       }
       RS485TX_DISABLE;
  }

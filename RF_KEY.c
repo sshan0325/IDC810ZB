@@ -141,8 +141,11 @@ void RF_Key_Packet_handler(void)
                 }                
                 break;
         default:
-            U1_Rx_Count --;
-            U1_Rx_DataPosition ++;              
+            if(U1_Rx_Count>0)
+            {
+                U1_Rx_Count --;
+                U1_Rx_DataPosition ++;              
+            }
             break;
         }
              

@@ -64,45 +64,60 @@ unsigned char CMD_Buffer[8] = { RF_STATUS_RQST , RF_STATUS_CLR_RQST , RF_DATA_RQ
 //////////////////////////////////////////////////////////////////////////////
 void Packet_handler(void)       
 {
-               #ifdef Consol_LOG 
-               printf ("\r\n%d,  %d",U2_Rx_Count, U2_Rx_DataPosition);     
-               #endif       
-          //if(U2_Rx_Compli_Flag == SET)
-          if((U2_Rx_Buffer[U2_Rx_DataPosition] == STX) && 
-              (U2_Rx_Buffer[U2_Rx_DataPosition+1] == RF_Camera_ID) && 
-              (U2_Rx_Buffer[U2_Rx_DataPosition+2] <= U2_Rx_Count) )
+    #ifdef  U2_DATA_MONITOR
+    printf ("\r\nBefore Received Data Count : %d  // Data Position : %d :", U2_Rx_Count, U2_Rx_DataPosition);
+    #endif        
+              
+    if(U2_Rx_Buffer[U2_Rx_DataPosition] == STX && U2_Rx_Count>0)
+    {
+          if ( (U2_Rx_Buffer[U2_Rx_DataPosition+1] == RF_Camera_ID) && 
+                (U2_Rx_Buffer[U2_Rx_DataPosition+2] <=  U2_Rx_Count) )
           {
-                if(Watch_Dog_init_Flag)                 //  초기 통신 시작시 1회 왓치독 셋팅 
-                {
-                    Watch_Dog_init_Flag = RESET;
-                    WatchDog_Init(); 
-                }
-
-                if( PacketValidation() == VALID) 
-                {
-                    CMD();
-                    Delay(12);                              //  idle time Delay 
-                    Response();
-                }
-               #ifdef Consol_LOG 
-               printf ("\r\n%d,  %d",U2_Rx_Count, U2_Rx_DataPosition);     
-               #endif                
-                //U2_Rx_Compli_Flag=RESET;
-                U2_Rx_Count-=U2_Rx_Buffer[U2_Rx_DataPosition+2];
-                U2_Rx_DataPosition+=U2_Rx_Buffer[U2_Rx_DataPosition+2];
-               #ifdef Consol_LOG 
-               printf ("\r\n%d,  %d",U2_Rx_Count, U2_Rx_DataPosition);     
-               #endif                                
-                
-          }
-          else
-          {
-              if(U2_Rx_Count>0)
+              if(Watch_Dog_init_Flag)                 //  초기 통신 시작시 1회 왓치독 셋팅 
               {
-                U2_Rx_Count--;
-                U2_Rx_DataPosition++;
+                  Watch_Dog_init_Flag = RESET;
+                  WatchDog_Init(); 
               }
+
+              if( PacketValidation() == VALID) 
+              {
+                  CMD();
+                  Delay(12);                              //  idle time Delay 
+                  Response();
+                  
+                  #ifdef  U2_DATA_MONITOR
+                  printf ("\r\nReceivce U2 Data :");
+                  for (unsigned char tmp=0 ; tmp< U2_Rx_Buffer[U2_Rx_DataPosition+2] ; tmp ++)
+                  {
+                      printf ("%x  ", U2_Rx_Buffer[U2_Rx_DataPosition+tmp]);
+                  }
+                  #endif                      
+              }
+              U2_Rx_Count-=U2_Rx_Buffer[U2_Rx_DataPosition+2];
+              U2_Rx_DataPosition+=U2_Rx_Buffer[U2_Rx_DataPosition+2];
           }
+          if ( (U2_Rx_Buffer[U2_Rx_DataPosition+1] != RF_Camera_ID) && 
+                (U2_Rx_Buffer[U2_Rx_DataPosition+2] <=  U2_Rx_Count) )
+          {
+             U2_Rx_Count-=U2_Rx_Buffer[U2_Rx_DataPosition+2];
+             U2_Rx_DataPosition+=U2_Rx_Buffer[U2_Rx_DataPosition+2];
+          }
+        else 
+        {
+
+        }                              
+    }
+    else
+    {
+        if (U2_Rx_Count >0)
+        {
+          U2_Rx_Count--;
+          U2_Rx_DataPosition++;            
+        }
+    }
+    #ifdef  U2_DATA_MONITOR
+    printf ("\r\nAfter Received Data Count : %d  // Data Position : %d :", U2_Rx_Count, U2_Rx_DataPosition);
+    #endif            
 }
 
 
@@ -113,32 +128,15 @@ unsigned char PacketValidation(void)
 {
     unsigned char Result=0;
     unsigned char Rx_Length=0;
-#if 0    
-                #ifdef Consol_LOG 
-                printf ("\r\n[System                ] U2_Rx_Buffer Position : %d",U2_Rx_DataPosition);           
-                printf ("\r\n[System                ] U2_Rx_Buffer Data Count : %d",U2_Rx_Count);           
-                printf ("\r\n[System                ] Data Length : %d",U2_Rx_Buffer[U2_Rx_DataPosition+2]);           
-                printf ("\r\nU2_Rx_Data : ") ;            
-                for (unsigned char tmp=0 ; tmp<U2_Rx_Buffer[U2_Rx_DataPosition+2] ; tmp++)
-                {
-                  printf ("%x  ",U2_Rx_Buffer[U2_Rx_DataPosition+tmp]) ;
-                }
-                printf ("\r\n");
-                #endif       
-#endif                
                 
     Rx_Length = U2_Rx_Buffer[U2_Rx_DataPosition+2];
-    
-    if( CMD_Check( &U2_Rx_Buffer[U2_Rx_DataPosition], sizeof(CMD_Buffer)/sizeof(unsigned char)))   
+
+    for(unsigned char i = 0 ; i < 8 ; i ++)
     {
-        Result ++; 
-    }
-    else 
-    {
-          #ifdef Consol_LOG 
-          printf ("\r\n[System                ] U2_Rx_Data is Invalid!!! __ CMD(%d)",U2_Rx_Buffer[U2_Rx_DataPosition+3] );           
-          
-          #endif                           
+        if(U2_Rx_Buffer[U2_Rx_DataPosition+3] == CMD_Buffer[i])  
+        {
+            Result ++; 
+        }
     }
      
     if( U2_Rx_Buffer[U2_Rx_DataPosition+(Rx_Length-1)] == Check_Checksum())        
@@ -147,26 +145,36 @@ unsigned char PacketValidation(void)
     }
     else
     {
-          #ifdef Consol_LOG 
-          printf ("\r\n[System                ] U2_Rx_Data is Invalid!!! __ Packet Length(%d)",U2_Rx_Buffer[U2_Rx_DataPosition+2]);           
-          #endif                   
     }
 
     if(Result != VALID )
     {
-#if 0      
-          U2_Rx_Count =0;
-          U2_Rx_Compli_Flag = RESET ;
-          for(unsigned char i = 0; i<92 ; i++ )
+          #ifdef DataValication_Check_LOG 
+          printf ("\r\n[System                ] U2_Rx_Data is Invalid!!!  Result : %d      ", Result);
+          for (unsigned char tmp=0 ; tmp<U2_Rx_Buffer[U2_Rx_DataPosition+2] ; tmp++)
           {
-              U2_Rx_Buffer[i] = 0;
-              U2_Tx_Buffer[i] = 0;
-          }
-#endif              
-     
+            printf ("%x  ",U2_Rx_Buffer[U2_Rx_DataPosition+tmp]) ;
+          }          
+          printf ("\r\nCMD Code is : %x  ",U2_Rx_Buffer[U2_Rx_DataPosition+3]) ;          
+          printf ("\r\nChecksum : %x / Received Data : %x", Check_Checksum(), U2_Rx_Buffer[U2_Rx_DataPosition+Rx_Length-1]) ;
+          #endif                                   
+          
           U2_Rx_Count--;
           U2_Rx_DataPosition++;
     }
+    else
+    {
+          #ifdef DataValication_Check_LOG 
+          printf ("\r\n[System                ] U2_Rx_Data is Valid!!!  Result : %d      ", Result);
+          for (unsigned char tmp=0 ; tmp<U2_Rx_Buffer[U2_Rx_DataPosition+2] ; tmp++)
+          {
+            printf ("%x  ",U2_Rx_Buffer[U2_Rx_DataPosition+tmp]) ;
+          }          
+          printf ("\r\nCMD Code is : %x  ",U2_Rx_Buffer[U2_Rx_DataPosition+3]) ;          
+          printf ("\r\nChecksum : %x / Received Data : %x", Check_Checksum(), U2_Rx_Buffer[U2_Rx_DataPosition+Rx_Length-1]) ;
+          #endif        
+    }
+    
     return Result;
  }
 
@@ -181,6 +189,12 @@ unsigned char CMD_Check(unsigned char *CMD, unsigned char CNT)
   {
       if(CMD[3] == CMD_Buffer[i])         CMD_Check++;
   }
+          #ifdef Consol_LOG 
+          for (unsigned char tmp=0 ; tmp<CMD[+2] ; tmp++)
+          {
+            printf ("%x  ",CMD[tmp]) ;
+          }          
+          #endif      
       if(CMD_Check)
         return 1;
       else
@@ -267,16 +281,6 @@ void CMD(void)
     unsigned char Requested_CMD;
     Requested_CMD = U2_Rx_Buffer[U2_Rx_DataPosition+3];
 
-#ifdef  U2_DATA_MONITOR
-    int tmp;
-    printf ("\r\nReceivce U2 Data :");
-    for (tmp=0 ; tmp< U2_Rx_Buffer[U2_Rx_DataPosition=2] ; tmp ++)
-    {
-        printf ("%x  ", U2_Rx_Buffer[U2_Rx_DataPosition+tmp]);
-    }
-#endif
-    
-    
     switch(Requested_CMD)
     {
         /***************** 0x11 상태 값 요청 ****************/

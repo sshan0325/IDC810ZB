@@ -13,8 +13,8 @@ extern unsigned char    U1_Rx_Count ;
 ////////////////// UART CH 2 ////////////////////
 extern unsigned char    U2_Rx_Buffer[U2_RX_BUFFER_SIZE]; 
 unsigned char               U2_Tx_Buffer[128] = {0} ;  
-extern unsigned char U2_Rx_DataPosition;
-
+extern unsigned char    U2_Rx_DataPosition;
+extern unsigned char    U2_Rx_DataSavePosition;
 
 ///////////////// DEVICE STATE /////////////////
 unsigned char Key_Reg_RQST_Flag = RESET;
@@ -64,60 +64,43 @@ unsigned char CMD_Buffer[8] = { RF_STATUS_RQST , RF_STATUS_CLR_RQST , RF_DATA_RQ
 //////////////////////////////////////////////////////////////////////////////
 void Packet_handler(void)       
 {
-    #ifdef  U2_DATA_MONITOR
-    printf ("\r\nBefore Received Data Count : %d  // Data Position : %d :", U2_Rx_Count, U2_Rx_DataPosition);
-    #endif        
-              
-    if(U2_Rx_Buffer[U2_Rx_DataPosition] == STX && U2_Rx_Count>0)
+    while(U2_Rx_Count>2)
     {
-          if ( (U2_Rx_Buffer[U2_Rx_DataPosition+1] == RF_Camera_ID) && 
-                (U2_Rx_Buffer[U2_Rx_DataPosition+2] <=  U2_Rx_Count) )
-          {
-              if(Watch_Dog_init_Flag)                 //  초기 통신 시작시 1회 왓치독 셋팅 
-              {
-                  Watch_Dog_init_Flag = RESET;
-                  WatchDog_Init(); 
-              }
 
-              if( PacketValidation() == VALID) 
+        if(U2_Rx_Buffer[U2_Rx_DataPosition] == STX && (U2_Rx_Buffer[U2_Rx_DataPosition+1] == RF_Camera_ID))
+        {
+              if ( U2_Rx_Buffer[U2_Rx_DataPosition+2] <=  U2_Rx_Count )
               {
-                  CMD();
-                  Delay(12);                              //  idle time Delay 
-                  Response();
-                  
-                  #ifdef  U2_DATA_MONITOR
-                  printf ("\r\nReceivce U2 Data :");
-                  for (unsigned char tmp=0 ; tmp< U2_Rx_Buffer[U2_Rx_DataPosition+2] ; tmp ++)
+                  if(Watch_Dog_init_Flag)                 //  초기 통신 시작시 1회 왓치독 셋팅 
                   {
-                      printf ("%x  ", U2_Rx_Buffer[U2_Rx_DataPosition+tmp]);
+                      Watch_Dog_init_Flag = RESET;
+                      WatchDog_Init(); 
                   }
-                  #endif                      
+                  if( PacketValidation() == VALID) 
+                  {
+                      CMD();
+                      Delay(12);                              //  idle time Delay 
+                      Response();
+                      #ifdef  U2_DATA_MONITOR_1
+                      printf ("\r\nRx Data Count :  %d :    , Data Position : %d    , DataSavePosition : %d", U2_Rx_Count, U2_Rx_DataPosition, U2_Rx_DataSavePosition);
+                      #endif
+                  }
+                  
+                  U2_Rx_Count-=U2_Rx_Buffer[U2_Rx_DataPosition+2];
+                  U2_Rx_DataPosition+=U2_Rx_Buffer[U2_Rx_DataPosition+2];
               }
-              U2_Rx_Count-=U2_Rx_Buffer[U2_Rx_DataPosition+2];
-              U2_Rx_DataPosition+=U2_Rx_Buffer[U2_Rx_DataPosition+2];
-          }
-          if ( (U2_Rx_Buffer[U2_Rx_DataPosition+1] != RF_Camera_ID) && 
-                (U2_Rx_Buffer[U2_Rx_DataPosition+2] <=  U2_Rx_Count) )
-          {
-             U2_Rx_Count-=U2_Rx_Buffer[U2_Rx_DataPosition+2];
-             U2_Rx_DataPosition+=U2_Rx_Buffer[U2_Rx_DataPosition+2];
-          }
-        else 
-        {
-
-        }                              
-    }
-    else
-    {
-        if (U2_Rx_Count >0)
-        {
-          U2_Rx_Count--;
-          U2_Rx_DataPosition++;            
+              
+              else 
+              {
+                  break;
+              }                              
         }
-    }
-    #ifdef  U2_DATA_MONITOR
-    printf ("\r\nAfter Received Data Count : %d  // Data Position : %d :", U2_Rx_Count, U2_Rx_DataPosition);
-    #endif            
+        else
+        {
+            U2_Rx_Count--;
+            U2_Rx_DataPosition++;       
+        }
+    }        
 }
 
 
@@ -158,9 +141,6 @@ unsigned char PacketValidation(void)
           printf ("\r\nCMD Code is : %x  ",U2_Rx_Buffer[U2_Rx_DataPosition+3]) ;          
           printf ("\r\nChecksum : %x / Received Data : %x", Check_Checksum(), U2_Rx_Buffer[U2_Rx_DataPosition+Rx_Length-1]) ;
           #endif                                   
-          
-          U2_Rx_Count--;
-          U2_Rx_DataPosition++;
     }
     else
     {
@@ -251,7 +231,14 @@ void Response(void)
    }
 
    USART2_TX();
-          
+
+   #ifdef  U2_DATA_MONITOR_1
+   printf ("\r\nU2  Tx Data(Length : %d) :", Tx_LENGTH);
+   for (unsigned char tmp=0 ; tmp< Tx_LENGTH ; tmp ++)
+   {
+       printf ("%x  ", U2_Tx_Buffer[tmp]);
+   }
+   #endif      
           
           
    /*************  응답 패킷 송신 후  예외 처리  루틴  **************/     

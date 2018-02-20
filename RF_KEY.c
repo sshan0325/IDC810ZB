@@ -158,7 +158,7 @@ void RF_Key_Packet_handler(void)
     
 void RF_Data_Confirm(unsigned char CNT)  // 인식된 키 데이터 확인 함수 
 {
-    
+        unsigned int TempDataPosition;
         for(unsigned char i = 1 ; i <= CNT ; i++ )
         { 
                 if(i == 1 )    value_1 = 6 ; 
@@ -169,7 +169,9 @@ void RF_Data_Confirm(unsigned char CNT)  // 인식된 키 데이터 확인 함수
                   
                 for(unsigned char j = value_1 ; j <= (value_1 + 15) ;j++)
                 {
-                      if(U2_Rx_Buffer[U2_Rx_DataPosition+j] == RF_Key_Data[j-6])          { RF_Data_Check ++;  }
+                      TempDataPosition = U2_Rx_DataPosition+j;
+                      if (TempDataPosition >255)                TempDataPosition-=256;
+                      if(U2_Rx_Buffer[TempDataPosition] == RF_Key_Data[j-6])          { RF_Data_Check ++;  }
                 }
                     
                  

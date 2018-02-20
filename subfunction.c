@@ -150,12 +150,16 @@ unsigned char Check_Checksum(void)                      //
 {
       unsigned char Checksum = 0x02;
       unsigned char Rx_Length = 0;
-      
-      Rx_Length = U2_Rx_Buffer[U2_Rx_DataPosition+2];
+      unsigned int     TempDataPosition;
+      TempDataPosition= U2_Rx_DataPosition+2;
+      if (TempDataPosition > 255)             TempDataPosition-=256;
+      Rx_Length = U2_Rx_Buffer[TempDataPosition];
       
       for(unsigned char i = 1 ; i< (Rx_Length -1) ; i++)
       {        
-        Checksum ^= U2_Rx_Buffer[U2_Rx_DataPosition+i];
+        TempDataPosition = U2_Rx_DataPosition+i;
+        if (TempDataPosition > 255)             TempDataPosition-=256;
+        Checksum ^= U2_Rx_Buffer[TempDataPosition];
         Checksum ++;
       }
       return Checksum;

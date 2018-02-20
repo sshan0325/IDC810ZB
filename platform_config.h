@@ -11,7 +11,6 @@
 #define Consol_LOG              
 //#define DataValication_Check_LOG      
 //#define U1_DATA_MONITOR
-//#define U2_DATA_MONITOR
 //#define U2_DATA_MONITOR_1
 
 #define SET                     1

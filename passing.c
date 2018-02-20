@@ -3,6 +3,7 @@
 #include "usart.h"
 #include "RF_KEY.h"
 #include "subfunction.h"
+#include "platform_config.h"
 
 /* Private variables ---------------------------------------------------------*/
 //Seungshin Using
@@ -62,25 +63,40 @@ unsigned char CMD_Buffer[8] = { RF_STATUS_RQST , RF_STATUS_CLR_RQST , RF_DATA_RQ
 //////////////////////////////////////////////////////////////////////////////
 void Packet_handler(void)       
 {
+    unsigned int IDField, LengthFiled;
+
     while(U2_Rx_Count>2)
     {
-
-        if(U2_Rx_Buffer[U2_Rx_DataPosition] == STX && (U2_Rx_Buffer[U2_Rx_DataPosition+1] == RF_Camera_ID))
+        IDField = U2_Rx_DataPosition+1;
+          if (IDField > 255)              IDField-=256;
+        LengthFiled =  U2_Rx_DataPosition+2;
+          if (LengthFiled > 255)          LengthFiled-=256;
+        if(U2_Rx_Buffer[U2_Rx_DataPosition] == STX && (U2_Rx_Buffer[IDField] == RF_Camera_ID))
         {
-              if ( U2_Rx_Buffer[U2_Rx_DataPosition+2] <=  U2_Rx_Count )
+              if ( U2_Rx_Buffer[LengthFiled] <=  U2_Rx_Count )
               {
+                  #ifdef  U2_DATA_MONITOR_1
+                  unsigned int TempDataPosition;
+                  printf ("\r\nRx Data Count :  %d :    , Data Position : %d    , DataSavePosition : %d", U2_Rx_Count, U2_Rx_DataPosition, U2_Rx_DataSavePosition);
+                  printf ("\r\nU2  Rx Data(Length : %d) :", U2_Rx_Buffer[LengthFiled]);
+                  for (unsigned char tmp=0 ; tmp< U2_Rx_Buffer[LengthFiled] ; tmp ++)
+                  {
+                      TempDataPosition = U2_Rx_DataPosition+tmp;
+                      if (TempDataPosition > 255)             TempDataPosition-=256;
+                      printf ("%x  ", U2_Rx_Buffer[TempDataPosition]);
+                  }                  
+                  #endif                
+                  
                   if( PacketValidation() == VALID) 
                   {
                       CMD();
-                      Delay(12);                              //  idle time Delay 
+                      //Delay(12);                              //  idle time Delay 
+                      Delay(4);                              //  idle time Delay 
                       Response();
-                      #ifdef  U2_DATA_MONITOR_1
-                      printf ("\r\nRx Data Count :  %d :    , Data Position : %d    , DataSavePosition : %d", U2_Rx_Count, U2_Rx_DataPosition, U2_Rx_DataSavePosition);
-                      #endif
                   }
                   
-                  U2_Rx_Count-=U2_Rx_Buffer[U2_Rx_DataPosition+2];
-                  U2_Rx_DataPosition+=U2_Rx_Buffer[U2_Rx_DataPosition+2];
+                  U2_Rx_Count-=U2_Rx_Buffer[LengthFiled];
+                  U2_Rx_DataPosition+=U2_Rx_Buffer[LengthFiled];
               }
               
               else 
@@ -104,18 +120,31 @@ unsigned char PacketValidation(void)
 {
     unsigned char Result=0;
     unsigned char Rx_Length=0;
-                
-    Rx_Length = U2_Rx_Buffer[U2_Rx_DataPosition+2];
+    unsigned int IDField, LengthFiled, CMDFiled, CRCField;
+    unsigned int TempDataPosition;
+    
+
+    IDField = U2_Rx_DataPosition+1;
+      if (IDField > 255)              IDField-=256;
+    LengthFiled =  U2_Rx_DataPosition+2;
+      if (LengthFiled > 255)          LengthFiled-=256;    
+    CMDFiled = U2_Rx_DataPosition+3;
+      if (CMDFiled > 255)          CMDFiled-=256;    
+  
+    Rx_Length = U2_Rx_Buffer[LengthFiled];
 
     for(unsigned char i = 0 ; i < 8 ; i ++)
     {
-        if(U2_Rx_Buffer[U2_Rx_DataPosition+3] == CMD_Buffer[i])  
+        if(U2_Rx_Buffer[CMDFiled] == CMD_Buffer[i])  
         {
             Result ++; 
         }
     }
-     
-    if( U2_Rx_Buffer[U2_Rx_DataPosition+(Rx_Length-1)] == Check_Checksum())        
+
+    CRCField = U2_Rx_DataPosition+Rx_Length-1;
+      if (CRCField > 255)          CRCField-=256;          
+    
+    if( U2_Rx_Buffer[CRCField] == Check_Checksum())        
     {
         Result ++; 
     }
@@ -125,27 +154,35 @@ unsigned char PacketValidation(void)
 
     if(Result != VALID )
     {
+#if 1
           #ifdef DataValication_Check_LOG 
-          printf ("\r\n[System                ] U2_Rx_Data is Invalid!!!  Result : %d      ", Result);
+          printf ("\r\n\r\n\r\n\r\n\r\n[System                ] U2_Rx_Data is Invalid!!!  Result : %d      ", Result);
           for (unsigned char tmp=0 ; tmp<U2_Rx_Buffer[U2_Rx_DataPosition+2] ; tmp++)
           {
-            printf ("%x  ",U2_Rx_Buffer[U2_Rx_DataPosition+tmp]) ;
+            TempDataPosition = U2_Rx_DataPosition+tmp;
+            if (TempDataPosition > 255)         TempDataPosition-=256;
+            printf ("%x  ",U2_Rx_Buffer[TempDataPosition]) ;
           }          
-          printf ("\r\nCMD Code is : %x  ",U2_Rx_Buffer[U2_Rx_DataPosition+3]) ;          
-          printf ("\r\nChecksum : %x / Received Data : %x", Check_Checksum(), U2_Rx_Buffer[U2_Rx_DataPosition+Rx_Length-1]) ;
+          printf ("\r\nCMD Code is : %x  ",U2_Rx_Buffer[CMDFiled]) ;          
+          printf ("\r\nChecksum : %x / Received Data : %x", Check_Checksum(), U2_Rx_Buffer[CRCField]) ;
+          printf ("\r\nU2 Data Count : %d / U2 Data Position : %d / U2 Data Save Position : %d", U2_Rx_Count, U2_Rx_DataPosition, U2_Rx_DataSavePosition) ;
+          printf ("\r\nU2 Data0] : %d / U2 Data[1] : %d ", U2_Rx_Buffer[0], U2_Rx_Buffer[1]) ;
           #endif                                   
+#endif
     }
     else
     {
+#if 0
           #ifdef DataValication_Check_LOG 
           printf ("\r\n[System                ] U2_Rx_Data is Valid!!!  Result : %d      ", Result);
           for (unsigned char tmp=0 ; tmp<U2_Rx_Buffer[U2_Rx_DataPosition+2] ; tmp++)
           {
             printf ("%x  ",U2_Rx_Buffer[U2_Rx_DataPosition+tmp]) ;
           }          
-          printf ("\r\nCMD Code is : %x  ",U2_Rx_Buffer[U2_Rx_DataPosition+3]) ;          
+          printf ("\r\nCMD Code is : %x  ",U2_Rx_Buffer[CMDFiled]) ;          
           printf ("\r\nChecksum : %x / Received Data : %x", Check_Checksum(), U2_Rx_Buffer[U2_Rx_DataPosition+Rx_Length-1]) ;
           #endif        
+#endif
     }
     
     return Result;
@@ -178,13 +215,15 @@ unsigned char CMD_Check(unsigned char *CMD, unsigned char CNT)
 ///////////////////////////////////////////////////////////////////////////////////////
 void Response(void)                                                          
 {
+    unsigned int TempDataPosition;
     GPIO_WriteBit(GPIOB,  GPIO_Pin_0 , (BitAction) Bit_SET);  // 485 Trans pin Enable 
-
     U2_Tx_Buffer[0] = STX ;
     U2_Tx_Buffer[1] = RF_Camera_ID ;
     U2_Tx_Buffer[2] = Tx_LENGTH ;
     U2_Tx_Buffer[3] = TX_CMD;
-    U2_Tx_Buffer[4] = U2_Rx_Buffer[U2_Rx_DataPosition+4] ;
+    TempDataPosition = U2_Rx_DataPosition+4;
+    if (TempDataPosition >255)                TempDataPosition-=256;
+    U2_Tx_Buffer[4] = U2_Rx_Buffer[TempDataPosition] ;
     U2_Tx_Buffer[Tx_LENGTH-1] = Make_Checksum() ;
 
     /************* 평상시 RF 데이터 인식 시 응답패킷 저장 루틴 **************/
@@ -254,7 +293,10 @@ void Response(void)
 void CMD(void)
 {
     unsigned char Requested_CMD;
-    Requested_CMD = U2_Rx_Buffer[U2_Rx_DataPosition+3];
+    unsigned int TempDataPosition;
+    TempDataPosition = U2_Rx_DataPosition+3;
+    if (TempDataPosition >255)          TempDataPosition-=256;
+    Requested_CMD = U2_Rx_Buffer[TempDataPosition];
 
     switch(Requested_CMD)
     {
@@ -273,8 +315,12 @@ void CMD(void)
                
               U1_Paket_Type = 0xD0;  
               U1_Tx_Buffer[1] = 0xD0;
-              U1_Tx_Buffer[2] = U2_Rx_Buffer[U2_Rx_DataPosition+5];
-              U1_Tx_Buffer[3] = U2_Rx_Buffer[U2_Rx_DataPosition+6];
+              TempDataPosition = U2_Rx_DataPosition+5;
+              if (TempDataPosition >255)          TempDataPosition-=256;              
+              U1_Tx_Buffer[2] = U2_Rx_Buffer[TempDataPosition];
+              TempDataPosition = U2_Rx_DataPosition+6;
+              if (TempDataPosition >255)          TempDataPosition-=256;    
+              U1_Tx_Buffer[3] = U2_Rx_Buffer[TempDataPosition];
               
               USART1_TX();
 
@@ -308,13 +354,15 @@ void CMD(void)
               Status_Value_Clear_Flag = SET;
 
               TX_CMD = RF_STAUS_CLR_RSPN;
-
-              if((U2_Rx_Buffer[U2_Rx_DataPosition+5] & 0x80 ) == 0x80)  // 상태 값 해제 패킷에 따라 비트 클리어 
+              
+              TempDataPosition = U2_Rx_DataPosition+5;
+              if (TempDataPosition >255)          TempDataPosition-=256;                    
+              if((U2_Rx_Buffer[TempDataPosition] & 0x80 ) == 0x80)  // 상태 값 해제 패킷에 따라 비트 클리어 
               {
                       U2_Tx_Buffer[5] &= 0x7F;
               }
               
-              if((U2_Rx_Buffer[U2_Rx_DataPosition+5] & 0x01 ) == 0x01)
+              if((U2_Rx_Buffer[TempDataPosition] & 0x01 ) == 0x01)
               {
                        U2_Tx_Buffer[5] &= 0xFE;
                }
@@ -326,13 +374,20 @@ void CMD(void)
         {
               #ifdef Consol_LOG        
               printf ("\r\n[System                ] RF Data is Requested.");     
+              #if 0
               printf ("\r\nReceivce U2 Data :");
               for (unsigned char tmp=0 ; tmp< 7 ; tmp ++)
               {
-                  printf ("%x  ", U2_Rx_Buffer[U2_Rx_DataPosition+tmp]);
+                  TempDataPosition = U2_Rx_DataPosition+tmp;
+                  if (TempDataPosition >255)          TempDataPosition-=256;                              
+                  printf ("%x  ", U2_Rx_Buffer[TempDataPosition]);
               }              
-              #endif                    
-              RF_Key_CNT = U2_Rx_Buffer[U2_Rx_DataPosition+5];  // 요청한 데이터 패킷 갯수만 보내기 위함 
+              #endif         //0
+              #endif         //Consol_LOG           
+              
+              TempDataPosition = U2_Rx_DataPosition+5;
+              if (TempDataPosition >255)          TempDataPosition-=256;                              
+              RF_Key_CNT = U2_Rx_Buffer[TempDataPosition];  // 요청한 데이터 패킷 갯수만 보내기 위함 
               
               TX_CMD = RF_DATA_RSPN; //  평상시 스마트 키 인식시 
 
@@ -357,8 +412,9 @@ void CMD(void)
                 #ifdef Consol_LOG        
                 printf ("\r\n[System                ] RF Data Confirm is Requested.");     
                 #endif                    
-          
-                KEY_Number_to_Confirm = U2_Rx_Buffer[U2_Rx_DataPosition+5];                   // 요청 갯수 저장
+                TempDataPosition = U2_Rx_DataPosition+5;
+                if (TempDataPosition >255)          TempDataPosition-=256;                                        
+                KEY_Number_to_Confirm = U2_Rx_Buffer[TempDataPosition];                   // 요청 갯수 저장
                 RF_Data_Confirm(KEY_Number_to_Confirm);                 // 전송 데이터 확인 함수
                 TX_CMD = RF_DATA_CONFIRM_RSPN ;                       
                 U2_Tx_Buffer[5] = KEY_Number_to_Confirm;
@@ -411,9 +467,12 @@ void CMD(void)
 
                if(Key_Save_Flag == RESET)  // 월패드에서 등록 실패시 키정보 비교하기위해 임시저장 루틴
                {
+                       unsigned int TempDataPosition;
                        for(char i = 5 ; i < 14 ; i++)
                        {
-                               Temp_buffer[i] = U2_Rx_Buffer[U2_Rx_DataPosition+i];
+                            TempDataPosition = U2_Rx_DataPosition+i;
+                            if (TempDataPosition >255)                TempDataPosition-=256;
+                               Temp_buffer[i] = U2_Rx_Buffer[TempDataPosition];
                        }
                        
                        Key_Save_Flag = SET;
@@ -539,14 +598,18 @@ void CMD(void)
 unsigned char Key_Info_Compare(void)            //  
 {
       char Compare_CNT = 0;
-       for(char i = 5 ; i < 14 ; i++)
-       {
-               if(Temp_buffer[i] == U2_Rx_Buffer[U2_Rx_DataPosition+i])
-                 Compare_CNT ++;
-       }  
-      if(Compare_CNT == 9)       
-        return 0 ;    
-      else                              
-        return 1 ;
+      unsigned int TempDataPosition;
+      for(char i = 5 ; i < 14 ; i++)
+      {
+          TempDataPosition = U2_Rx_DataPosition+i;
+          if (TempDataPosition> 255)            TempDataPosition-=256;
+        
+              if(Temp_buffer[i] == U2_Rx_Buffer[TempDataPosition])
+                Compare_CNT ++;
+      }  
+     if(Compare_CNT == 9)       
+       return 0 ;    
+     else                              
+       return 1 ;
 }
                   

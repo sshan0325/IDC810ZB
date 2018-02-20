@@ -22,7 +22,6 @@ unsigned char Key_Reg_RQST_Flag = RESET;
 ///////////////// Flag /////////////////////////////
 extern unsigned char RFKey_Detected;
 
-
 //Need to Check
 extern unsigned char U2_Rx_Compli_Flag ;
 unsigned char Temp_buffer[17] ={0};
@@ -48,7 +47,6 @@ unsigned char U1_Paket_Type = 0x00;
 unsigned char RF_Comm_Time_Out_Flag = RESET;
 unsigned char Status_Value_Clear_Flag = RESET;
 extern unsigned char RF_Key_Data[128];
-unsigned char Watch_Dog_init_Flag = SET;
 extern unsigned char CNT ;
 unsigned char CMD_Buffer[8] = { RF_STATUS_RQST , RF_STATUS_CLR_RQST , RF_DATA_RQST , RF_DATA_CONFIRM_RQST ,
                                                 REG_MODE_START_RQST , REG_KEY_DATA_RQST , REG_MODE_END_RQST , EQUIP_INFOR_RQST};
@@ -71,11 +69,6 @@ void Packet_handler(void)
         {
               if ( U2_Rx_Buffer[U2_Rx_DataPosition+2] <=  U2_Rx_Count )
               {
-                  if(Watch_Dog_init_Flag)                 //  초기 통신 시작시 1회 왓치독 셋팅 
-                  {
-                      Watch_Dog_init_Flag = RESET;
-                      WatchDog_Init(); 
-                  }
                   if( PacketValidation() == VALID) 
                   {
                       CMD();
@@ -169,16 +162,11 @@ unsigned char CMD_Check(unsigned char *CMD, unsigned char CNT)
   {
       if(CMD[3] == CMD_Buffer[i])         CMD_Check++;
   }
-          #ifdef Consol_LOG 
-          for (unsigned char tmp=0 ; tmp<CMD[+2] ; tmp++)
-          {
-            printf ("%x  ",CMD[tmp]) ;
-          }          
-          #endif      
-      if(CMD_Check)
-        return 1;
-      else
-        return 0;
+
+  if(CMD_Check)
+    return 1;
+  else
+    return 0;
 }
 //////////////////////////////////////////////////////////////////////////
 
@@ -287,7 +275,9 @@ void CMD(void)
               U1_Tx_Buffer[1] = 0xD0;
               U1_Tx_Buffer[2] = U2_Rx_Buffer[U2_Rx_DataPosition+5];
               U1_Tx_Buffer[3] = U2_Rx_Buffer[U2_Rx_DataPosition+6];
+              
               USART1_TX();
+
               RF_Comm_Time_Out_Flag = SET; //  타임 아웃
                
                if((RF_Data_Confirm_Flag == SET) || (RF_DATA_RQST_Flag == SET)|| (Status_Value_Clear_Flag == SET) 
@@ -398,17 +388,17 @@ void CMD(void)
         /************************** 0x32  스마트키 등록 요청 ********************************/          
         case REG_KEY_DATA_RQST:  // 0x32  스마트키 등록 요청
         {
-              //#ifdef Consol_LOG        
-              //printf ("\r\n[System                ] RF KEY Data is Requested.");     
-              //#endif                    
+               //#ifdef Consol_LOG        
+               //printf ("\r\n[System                ] RF KEY Data is Requested.");     
+               //#endif                    
                TX_CMD = REG_KEY_DATA_RSPN ;    
               
                Key_Reg_RQST_Flag = SET;
                Reg_Mode_Start_Flag = RESET;
                
-               Key_Reg_Timeout_flag = RESET;
                Key_Reg_Timeout_CNT =0; // 등록 모드 타임아웃 초기화 
-
+               Key_Reg_Timeout_flag = SET;  // 등록 모드 타임아웃 세팅                
+               
                GPIO_WriteBit(GPIOB,GPIO_Pin_15,(BitAction) Bit_SET);  // 중간에 현관카메라가 꺼져지고 나서 다시 켰을때 등록모드를 유지하기 위해서 
              
    
@@ -487,8 +477,6 @@ void CMD(void)
                               }
                        }
               }  // END of if (등록 키값 안받았을때 )
-               Key_Reg_Timeout_flag = SET;  // 등록 모드 타임아웃 세팅 
-             
          }// END of case
          break;  
 
@@ -496,7 +484,7 @@ void CMD(void)
         case REG_MODE_END_RQST:  // 0x33  스마트키 등록 모드 종료 
         {
                #ifdef Consol_LOG        
-               printf ("\r\n[System                ] RF Status clear is Requested.");     
+               printf ("\r\n[System                ] RF Key Registrration Mode Stop is Requested.");     
                #endif                    
                TX_CMD = REG_MODE_END_RSPN ;    
                Tx_LENGTH = 7;

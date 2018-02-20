@@ -17,7 +17,7 @@ extern unsigned char U2_Rx_Buffer[U2_RX_BUFFER_SIZE];
 extern unsigned char U2_Rx_DataPosition;
 /* RF_Key ---------------------------------------------------------------*/
 unsigned char Received_RF_KeyData_Count=0;
-
+extern unsigned int RF_KeyDATA_EraseTime_CNT;
 /* FLAG ----------------------------------------------------------------*/
 unsigned char Reg_key_Value_Receive_Flag = RESET;
 unsigned char RFKey_Detected = RESET;
@@ -42,7 +42,7 @@ unsigned char RF_Key_Data[128] = {0};
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void RF_Key_Packet_handler(void)
 {
-    if(U1_Rx_Count >= RF_KEY_PACKET_SIZE)
+    while(U1_Rx_Count >= RF_KEY_PACKET_SIZE)
     {
         #ifdef U1_DATA_MONITOR
         int tmp=0;
@@ -59,7 +59,8 @@ void RF_Key_Packet_handler(void)
         case RF_KEY_CHECK:
                 RF_Key_CNT = U1_Rx_Buffer[U1_Rx_DataPosition+2];
                 if(RF_Key_CNT>=5)       RF_Key_CNT=5;
-            
+                
+                U2_Tx_Buffer[5] &= 0xF1;
                 U2_Tx_Buffer[6] =  RF_Key_CNT; //U1_DA_Buffer[2];  // 키 갯수 전달 
                 
                 RF_Comm_Time_Out_Flag = RESET;     // RF 모듈 타임 아웃 초기화
@@ -75,6 +76,7 @@ void RF_Key_Packet_handler(void)
                 printf ("\r\n[RF Key Comm           ] RF_KEY Recognition Done(Key Count : %d)",RF_Key_CNT); 
                 #endif                      
                 RFKey_Detected = SET;
+                RF_KeyDATA_EraseTime_CNT=0;
                 Received_RF_KeyData_Count++;
 
                 U1_Rx_Count -= RF_KEY_PACKET_SIZE;
@@ -228,9 +230,7 @@ void RF_Data_Save(unsigned char CNT, unsigned char *U1_Rx)      // 스마트키 데이
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Clear_Tx_Buffer(void)  // 전송 데이터 초기화 함수
 {
-        unsigned char  i= 0;
-
-        for( i = 0 ; i < 92 ; i++)  
+        for( unsigned char i = 0 ; i < 92 ; i++)  
         {
                 U2_Tx_Buffer[i] = 0x00;
         }

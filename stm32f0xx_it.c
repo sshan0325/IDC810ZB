@@ -38,7 +38,6 @@ volatile unsigned char RF_Comm_Time_Out_Flag_CNT = 0;
 extern unsigned char Key_Reg_Timeout_flag;
 unsigned int Key_Reg_Timeout_CNT = 0;
 unsigned char CNT = 0;
-//Need to Check
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -105,9 +104,10 @@ void TIM14_IRQHandler(void) //10ms
     if (TIM_GetITStatus(TIM14, TIM_IT_Update) != RESET)
     {
         TIM_ClearITPendingBit(TIM14, TIM_IT_Update);
-          
+        
+        // RF Key 인식 이후 
         if(RFKey_Detected)                     RF_KeyDATA_EraseTime_CNT++;
-        if(RF_KeyDATA_EraseTime_CNT == 200)  // 1 s  
+        if(RF_KeyDATA_EraseTime_CNT >= 1000)  // 10 s  
         {
               RF_KeyDATA_EraseTime_CNT = 0;
               RFKey_Detected=RESET;
@@ -115,8 +115,9 @@ void TIM14_IRQHandler(void) //10ms
               RF_Key_CNT=0;
         }          
         
+        // 100ms, RF 모듈 통신 Error Check 100ms 내에 RF 모듈로 부터 응답이 없을 경우 : Error Bit Check
         if(RF_Comm_Time_Out_Flag)       RF_Comm_Time_Out_Flag_CNT++;
-        if(RF_Comm_Time_Out_Flag_CNT == 10)  // 100ms, RF 모듈이 응답해야 하는 최소 시간
+        if(RF_Comm_Time_Out_Flag_CNT >= 10) 
         {
               RF_Comm_Time_Out_Flag = RESET;
               RF_Comm_Time_Out_Flag_CNT = 0;
@@ -124,12 +125,16 @@ void TIM14_IRQHandler(void) //10ms
               U2_Tx_Buffer[5] |= 0x80;
         }        
         
+        //  RF KEY Data 요청 후 5분 간 재 요청이 없으며 스마트키 등록 모드 강제 종료
         if(Key_Reg_Timeout_flag)             Key_Reg_Timeout_CNT ++;
-        if(Key_Reg_Timeout_CNT == 30000) // 5분 
+        if(Key_Reg_Timeout_CNT >= 30000) 
         {
               Key_Reg_Timeout_CNT = 0;
               Key_Reg_End_Button_Flag = SET;  // 타임 아웃시 종료 버튼 눌렸다고 강제 설정
               Key_Reg_Timeout_flag = RESET;
+              #ifdef Consol_LOG        
+              printf ("\r\n[System                ] RF KEY Regist Mode is Time-Out");     
+              #endif                      
         }
     }
 }
@@ -141,20 +146,16 @@ void USART2_IRQHandler(void)
         U2_Rx_Buffer[U2_Rx_DataSavePosition] = USART_ReceiveData(USART2);  
         U2_Rx_Count++;
         U2_Rx_DataSavePosition++;
+        if (U2_Rx_DataSavePosition-U2_Rx_DataPosition > U2_Rx_Count)
+        {
+            U2_Rx_DataSavePosition=0;
+            U2_Rx_DataPosition=0;
+            U2_Rx_Count=0;
+            #ifdef Consol_LOG   
+            printf ("\r\n[System                ] U2 Beffer Error");     
+            #endif
+        }
     }
-#if 0  
-    if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
-    {
-            U2_Rx_Buffer[U2_Rx_Count++] = USART_ReceiveData(USART2);  
-            if(  U2_Rx_Buffer[0] != STX )            {  U2_Rx_Count = 0; }
-            if(  (U2_Rx_Count == 2) && (U2_Rx_Buffer[1] != RF_Camera_ID) )   { U2_Rx_Count = 0; }
-            if( U2_Rx_Buffer[2] == U2_Rx_Count ) 
-            {
-                  U2_Rx_Compli_Flag = SET ; 
-                  U2_Rx_Count = 0;
-            }
-    } // end of RX if
-#endif        
       
     if(USART_GetITStatus(USART2, USART_IT_TXE) != RESET)
     {
@@ -170,6 +171,15 @@ void USART1_IRQHandler(void)
             U1_Rx_Buffer[U1_Rx_DataSavePosition] = USART_ReceiveData(USART1);  
             U1_Rx_Count++;
             U1_Rx_DataSavePosition++;
+            if (U1_Rx_DataSavePosition-U1_Rx_DataPosition > U1_Rx_Count)
+            {
+                U1_Rx_DataSavePosition=0;
+                U1_Rx_DataPosition=0;
+                U1_Rx_Count=0;
+                #ifdef Consol_LOG   
+                printf ("\r\n[System                ] U1 Beffer Error");     
+                #endif
+            }            
     }
 
     if(USART_GetITStatus(USART1, USART_IT_TXE) != RESET)

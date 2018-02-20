@@ -12,7 +12,7 @@ static __IO uint32_t               TimingDelay;
 extern unsigned char        U2_Tx_Buffer[128];
 extern unsigned char U2_Rx_DataPosition;
 
-/*************************** TIMER ********************************/
+/*************************** Flag ********************************/
 extern unsigned char    Reg_Mode_Start_Flag;
 extern unsigned char    Key_Reg_RQST_Flag ;
 unsigned char                Key_Reg_End_Button_Flag = RESET;
@@ -107,6 +107,7 @@ void SysInit(void)
         NVIC_Config();
         USART_Configuration();
         TIM_Config();  
+        WatchDog_Init(); 
 }
 
 

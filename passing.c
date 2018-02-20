@@ -121,8 +121,6 @@ unsigned char PacketValidation(void)
     unsigned char Result=0;
     unsigned char Rx_Length=0;
     unsigned int IDField, LengthFiled, CMDFiled, CRCField;
-    unsigned int TempDataPosition;
-    
 
     IDField = U2_Rx_DataPosition+1;
       if (IDField > 255)              IDField-=256;
@@ -156,8 +154,9 @@ unsigned char PacketValidation(void)
     {
 #if 1
           #ifdef DataValication_Check_LOG 
+          unsigned int TempDataPosition;
           printf ("\r\n\r\n\r\n\r\n\r\n[System                ] U2_Rx_Data is Invalid!!!  Result : %d      ", Result);
-          for (unsigned char tmp=0 ; tmp<U2_Rx_Buffer[U2_Rx_DataPosition+2] ; tmp++)
+          for (unsigned char tmp=0 ; tmp<U2_Rx_Buffer[LengthFiled] ; tmp++)
           {
             TempDataPosition = U2_Rx_DataPosition+tmp;
             if (TempDataPosition > 255)         TempDataPosition-=256;
@@ -165,26 +164,10 @@ unsigned char PacketValidation(void)
           }          
           printf ("\r\nCMD Code is : %x  ",U2_Rx_Buffer[CMDFiled]) ;          
           printf ("\r\nChecksum : %x / Received Data : %x", Check_Checksum(), U2_Rx_Buffer[CRCField]) ;
-          printf ("\r\nU2 Data Count : %d / U2 Data Position : %d / U2 Data Save Position : %d", U2_Rx_Count, U2_Rx_DataPosition, U2_Rx_DataSavePosition) ;
-          printf ("\r\nU2 Data0] : %d / U2 Data[1] : %d ", U2_Rx_Buffer[0], U2_Rx_Buffer[1]) ;
           #endif                                   
 #endif
     }
-    else
-    {
-#if 0
-          #ifdef DataValication_Check_LOG 
-          printf ("\r\n[System                ] U2_Rx_Data is Valid!!!  Result : %d      ", Result);
-          for (unsigned char tmp=0 ; tmp<U2_Rx_Buffer[U2_Rx_DataPosition+2] ; tmp++)
-          {
-            printf ("%x  ",U2_Rx_Buffer[U2_Rx_DataPosition+tmp]) ;
-          }          
-          printf ("\r\nCMD Code is : %x  ",U2_Rx_Buffer[CMDFiled]) ;          
-          printf ("\r\nChecksum : %x / Received Data : %x", Check_Checksum(), U2_Rx_Buffer[U2_Rx_DataPosition+Rx_Length-1]) ;
-          #endif        
-#endif
-    }
-    
+
     return Result;
  }
 
@@ -215,7 +198,7 @@ unsigned char CMD_Check(unsigned char *CMD, unsigned char CNT)
 ///////////////////////////////////////////////////////////////////////////////////////
 void Response(void)                                                          
 {
-    unsigned int TempDataPosition;
+    int TempDataPosition;
     GPIO_WriteBit(GPIOB,  GPIO_Pin_0 , (BitAction) Bit_SET);  // 485 Trans pin Enable 
     U2_Tx_Buffer[0] = STX ;
     U2_Tx_Buffer[1] = RF_Camera_ID ;
@@ -244,11 +227,13 @@ void Response(void)
           
     /*************  스마트키 등록시 응답패킷 저장 루틴  **************/          
     if((Reg_key_Value_Receive_Flag == SET))
-   {
+   {    
         Tx_LENGTH = ( 16 * RF_Key_CNT ) + 7 ;
         for(unsigned char i = 6 ; i < ( Tx_LENGTH - 1 ) ; i ++ )    // 22
         {                                                                              // 패킷 길이 23 체크섭 전까지 버퍼  [23-1] = [22] ( 체크섬 자리) (<) 이므로 체크섬 자리바로 앞!
-            U2_Tx_Buffer[i] = U1_Rx_Buffer[U1_Rx_DataPosition-RF_KEY_PACKET_SIZE+i-5] ;                            //16까지 저장,  UART 1에서 들어오는 데이터 필드 [0] 은 버리고 전송
+            TempDataPosition = U1_Rx_DataPosition-RF_KEY_PACKET_SIZE+i-5;
+            if (TempDataPosition < 0 ) TempDataPosition+=256;
+            U2_Tx_Buffer[i] = U1_Rx_Buffer[TempDataPosition] ;                            //16까지 저장,  UART 1에서 들어오는 데이터 필드 [0] 은 버리고 전송
         }
         U2_Tx_Buffer[2] = Tx_LENGTH;                                         // Tx_LENGTH 변수에만 넣고 버퍼에 넣지 않으면 값이 않들어 감
         U2_Tx_Buffer[Tx_LENGTH-1] = Make_Checksum();

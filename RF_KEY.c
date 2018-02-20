@@ -42,6 +42,7 @@ unsigned char RF_Key_Data[128] = {0};
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void RF_Key_Packet_handler(void)
 {
+    unsigned int TempDataPosition;
     while(U1_Rx_Count >= RF_KEY_PACKET_SIZE)
     {
         #ifdef U1_DATA_MONITOR
@@ -49,6 +50,8 @@ void RF_Key_Packet_handler(void)
         printf ("         [RF -> CAM] / Position : %d  -  ",U1_Rx_DataPosition) ;            
         for (tmp=U1_Rx_DataPosition ; tmp<U1_Rx_DataPosition+17 ; tmp++)
         {
+          TempDataPosition = tmp;
+          if (TempDataPosition>255)             TempDataPosition-=256;
           printf ("%x  ",U1_Rx_Buffer[tmp]) ;
         }
         printf ("\r\n");
@@ -57,7 +60,9 @@ void RF_Key_Packet_handler(void)
         switch (U1_Rx_Buffer[U1_Rx_DataPosition])
         {
         case RF_KEY_CHECK:
-                RF_Key_CNT = U1_Rx_Buffer[U1_Rx_DataPosition+2];
+                TempDataPosition = U1_Rx_DataPosition+2;
+                if (TempDataPosition>255)             TempDataPosition-=256;
+                RF_Key_CNT = U1_Rx_Buffer[TempDataPosition];
                 if(RF_Key_CNT>=5)       RF_Key_CNT=5;
                 
                 U2_Tx_Buffer[5] &= 0xF1;
@@ -84,7 +89,11 @@ void RF_Key_Packet_handler(void)
                 
                 if(Received_RF_KeyData_Count >= RF_Key_CNT)
                 {
-                    RF_Data_Save(RF_Key_CNT, &U1_Rx_Buffer[U1_Rx_DataPosition-(RF_KEY_PACKET_SIZE*RF_Key_CNT)]);  // 키 데이터 저장 함수 
+                    if (U1_Rx_DataPosition < (RF_KEY_PACKET_SIZE*RF_Key_CNT) )
+                        TempDataPosition = U1_Rx_DataPosition-(RF_KEY_PACKET_SIZE*RF_Key_CNT) +256;
+                    else
+                        TempDataPosition = U1_Rx_DataPosition-(RF_KEY_PACKET_SIZE*RF_Key_CNT);
+                    RF_Data_Save(RF_Key_CNT, &U1_Rx_Buffer[TempDataPosition]);  // 키 데이터 저장 함수 
                     RF_Key_CNT=0;
                     Received_RF_KeyData_Count=0;
                 }                
@@ -119,15 +128,16 @@ void RF_Key_Packet_handler(void)
                     #ifdef Consol_LOG                      
                     printf ("\r\n[RF Key Comm           ] RF_KEY Regist fail\r\n"); 
                     #endif       
-                    
-                    if(U1_Rx_Buffer[U1_Rx_DataPosition+6] == 0x01) // 이미 등록된 키일 경우(부저음 4회 발생)
+                    TempDataPosition = U1_Rx_DataPosition+6;
+                    if (TempDataPosition>255)             TempDataPosition-=256;                    
+                    if(U1_Rx_Buffer[TempDataPosition] == 0x01) // 이미 등록된 키일 경우(부저음 4회 발생)
                     {
                           U2_Tx_Buffer[5] |= 0x04;   // 등록된 키라는 플래그 셋팅 및 데이터 저장
                           Reg_Fail_Flag = SET;
                             
                           BuzzerRun(100, 4, 70, 15);
                     }
-                    else if(U1_Rx_Buffer[U1_Rx_DataPosition+6] == 0x02)  // 통신 실패 났을 경우
+                    else if(U1_Rx_Buffer[TempDataPosition] == 0x02)  // 통신 실패 났을 경우
                     {
                           U2_Tx_Buffer[5] |= 0x08;     // 통신 실패라는 플래그 셋팅 및 데이터 저장
                           RF_Communi_Fail = SET;

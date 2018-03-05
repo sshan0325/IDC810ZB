@@ -220,7 +220,7 @@ void Response(void)
            U2_Tx_Buffer[2] = Tx_LENGTH;                            // Tx_LENGTH 변수에만 넣고 버퍼에 넣지 않으면 값이 않들어 감
            U2_Tx_Buffer[Tx_LENGTH-1] = Make_Checksum();
 
-           RF_DATA_RQST_Flag = RESET; // 15.05.20 전광식.
+           //RF_DATA_RQST_Flag = RESET; // 15.05.20 전광식.
            RF_Key_CNT = 0;
            Reg_key_Value_Receive_Flag = RESET;
     }
@@ -243,6 +243,13 @@ void Response(void)
    }
 
    USART2_TX();
+   
+   if((RF_DATA_RQST_Flag == SET))
+   {
+        U2_Tx_Buffer[5]=0;
+        U2_Tx_Buffer[6]=0;
+        RF_DATA_RQST_Flag = RESET; 
+   }
 
    #ifdef  U2_DATA_MONITOR_1
    printf ("\r\nU2  Tx Data(Length : %d) :", Tx_LENGTH);

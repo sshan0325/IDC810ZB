@@ -22,7 +22,8 @@ void WatchDog_Init(void)
   /* IWDG counter clock: LSI/32 */
   IWDG_SetPrescaler(IWDG_Prescaler_256);
 
-  IWDG_SetReload(4095);
+  //IWDG_SetReload(4095);
+  IWDG_SetReload(400);
 
   /* Reload IWDG counter */
   IWDG_ReloadCounter();

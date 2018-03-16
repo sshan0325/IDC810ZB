@@ -76,7 +76,7 @@ void RF_Key_Packet_handler(void)
                 break;
                 
         case RF_KEY_RECOGNITION:   
-                
+                if(RF_Key_CNT>=5)       RF_Key_CNT=5;
                 #ifdef Consol_LOG                      
                 printf ("\r\n[RF Key Comm           ] RF_KEY Recognition Done(Key Count : %d)",RF_Key_CNT); 
                 #endif                      

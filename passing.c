@@ -212,6 +212,7 @@ void Response(void)
     /************* 평상시 RF 데이터 인식 시 응답패킷 저장 루틴 **************/
     if((RF_DATA_RQST_Flag == SET))
     {
+          if(RF_Key_CNT>=5)       RF_Key_CNT=5;
           Tx_LENGTH = ( 16 * RF_Key_CNT ) + 7 ;
            for(unsigned char i = 6 ; i < ( Tx_LENGTH - 1 ) ; i ++ ) 
            {                                                                 // 패킷 길이 23 체크섭 전까지 버퍼  [23-1] = [22] ( 체크섬 자리) (<) 이므로 체크섬 자리바로 앞!
@@ -228,6 +229,7 @@ void Response(void)
     /*************  스마트키 등록시 응답패킷 저장 루틴  **************/          
     if((Reg_key_Value_Receive_Flag == SET))
    {    
+        if(RF_Key_CNT>=5)       RF_Key_CNT=5;
         Tx_LENGTH = ( 16 * RF_Key_CNT ) + 7 ;
         for(unsigned char i = 6 ; i < ( Tx_LENGTH - 1 ) ; i ++ )    // 22
         {                                                                              // 패킷 길이 23 체크섭 전까지 버퍼  [23-1] = [22] ( 체크섬 자리) (<) 이므로 체크섬 자리바로 앞!
@@ -383,6 +385,7 @@ void CMD(void)
               
               TX_CMD = RF_DATA_RSPN; //  평상시 스마트 키 인식시 
 
+              if(RF_Key_CNT>=5)       RF_Key_CNT=5;
               U2_Tx_Buffer[5] = RF_Key_CNT;
               
               RF_DATA_RQST_Flag = SET;
